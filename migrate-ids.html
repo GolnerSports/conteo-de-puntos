@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Migrar IDs Golner</title>
+  <style>
+    body { background:#0a1a0a; color:#fff; font-family:monospace; padding:32px; }
+    button { background:#39FF14; color:#000; border:none; padding:12px 24px; font-size:16px; font-weight:700; cursor:pointer; border-radius:8px; margin-bottom:24px; }
+    #log { white-space:pre-wrap; font-size:13px; line-height:1.8; }
+    .ok   { color:#39FF14; }
+    .warn { color:#ffaa00; }
+    .err  { color:#ff4444; }
+  </style>
+</head>
+<body>
+  <h2>Migrar IDs Golner → Firestore</h2>
+  <button onclick="runMigration()">▶ Ejecutar migración</button>
+  <div id="log">Presiona el botón para iniciar…</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
+  authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
+  projectId:         "conteo-de-puntos-golner-sports",
+  storageBucket:     "conteo-de-puntos-golner-sports.firebasestorage.app",
+  messagingSenderId: "440898623228",
+  appId:             "1:440898623228:web:e4c0bc3693080e4e0d2979"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// Mapa completo del CSV: nombre normalizado → ID Golner
+const CSV_MAP = {
+  "ezequiel benbotaso":      "GN7032",
+  "budy birch":              "GN7031",
+  "yosef cherem":            "GN7030",
+  "pepe chacalo":            "GN7029",
+  "pepe chacalo m":          "GN7029",
+  "yosef atach":             "GN7028",
+  "marcos telio":            "GN7027",
+  "victor matatof":          "GN7026",
+  "victor matatoff":         "GN7026",
+  "victor matatof":          "GN7026",
+  "leon chayo":              "GN7025",
+  "joseph cattan":           "GN7024",
+  "abraham levy":            "GN7023",
+  "abraham amiga nagar":     "GN7022",
+  "abraham amiga":           "GN7022",
+  "isaac birch":             "GN7021",
+  "eli atach":               "GN7020",
+  "leon entebi":             "GN7019",
+  "abdo tuachi":             "GN7018",
+  "david cattan cherem":     "GN7017",
+  "david cattan romano":     "GN7016",
+  "ruben suets":             "GN7015",
+  "eliahu yampolsky":        "GN7014",
+  "abraham michan":          "GN7013",
+  "abraham amiga amiga":     "GN7012",
+  "yosef nayar shueke":      "GN7011",
+  "yosef nayar":             "GN7010",
+  "ovadia ezra suets":       "GN7009",
+  "ovadia suets":            "GN7009",
+  "ovadia suets tawil":      "GN7009",
+  "salo tuachi":             "GN7008",
+  "aaron asquenazi mamieh":  "GN7007",
+  "isaac maleh":             "GN7006",
+  "rafa shueke":             "GN7005",
+  "david amiga":             "GN7004",
+  "joseph alfie":            "GN7003",
+  "isaac amiga kanan":       "GN7002",
+  "daniel michan":           "GN7001",
+};
+
+function normalize(str) {
+  return (str || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().trim();
+}
+
+function findId(name) {
+  const norm = normalize(name);
+  // Exact match
+  if (CSV_MAP[norm]) return CSV_MAP[norm];
+  // Partial match: busca si alguna clave empieza con el nombre o viceversa
+  for (const [key, id] of Object.entries(CSV_MAP)) {
+    if (norm.startsWith(key) || key.startsWith(norm)) return id;
+  }
+  return null;
+}
+
+window.runMigration = async function() {
+  const log = document.getElementById("log");
+  log.innerHTML = "Cargando participantes de Firestore…\n";
+
+  const snap = await getDocs(collection(db, "participants"));
+  const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  log.innerHTML += `Encontrados: ${participants.length} participantes\n\n`;
+
+  let updated = 0, skipped = 0, notFound = 0;
+
+  for (const p of participants) {
+    if (p.golnerId) {
+      log.innerHTML += `<span class="warn">⏭ ${p.name} — ya tiene ID: ${p.golnerId}</span>\n`;
+      skipped++;
+      continue;
+    }
+
+    const golnerId = findId(p.name);
+    if (golnerId) {
+      await updateDoc(doc(db, "participants", p.id), { golnerId });
+      log.innerHTML += `<span class="ok">✅ ${p.name} → ${golnerId}</span>\n`;
+      updated++;
+    } else {
+      log.innerHTML += `<span class="err">❌ ${p.name} — no encontrado en el CSV</span>\n`;
+      notFound++;
+    }
+  }
+
+  log.innerHTML += `\n<strong>Listo: ${updated} actualizados, ${skipped} ya tenían ID, ${notFound} no encontrados.</strong>`;
+};
+</script>
+</body>
+</html>

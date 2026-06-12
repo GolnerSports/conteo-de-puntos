@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOLNER SPORTS — Admin Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#080c0a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Apple / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Golner" />
+  <link rel="apple-touch-icon" href="/assets/icon-180.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png" />
+</head>
+<body class="login-page">
+
+  <div class="login-bg">
+    <div class="login-bg-grid"></div>
+  </div>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <!-- Brand -->
+      <div class="login-brand">
+        <div class="login-brand-icon">
+          <i class="fa-solid fa-futbol"></i>
+        </div>
+        <h1 class="login-brand-name">GOLNER SPORTS</h1>
+        <p class="login-brand-sub">Panel Administrativo</p>
+      </div>
+
+      <!-- Form -->
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-envelope"></i> Correo electrónico</label>
+          <input
+            type="email"
+            id="loginEmail"
+            class="form-input"
+            placeholder="admin@golnersports.com"
+            required
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-lock"></i> Contraseña</label>
+          <div class="input-with-icon">
+            <input
+              type="password"
+              id="loginPassword"
+              class="form-input"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            />
+            <button type="button" class="toggle-password" id="togglePwd">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-error hidden" id="loginError">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="loginErrorMsg">Credenciales incorrectas</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+          <span class="btn-text">Iniciar sesión</span>
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <a href="index.html" class="back-link">
+          <i class="fa-solid fa-arrow-left"></i> Ver tabla pública
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Auth -->
+  <script type="module">
+    import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
+      authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
+      projectId:         "conteo-de-puntos-golner-sports",
+      storageBucket:     "conteo-de-puntos-golner-sports.firebasestorage.app",
+      messagingSenderId: "440898623228",
+      appId:             "1:440898623228:web:e4c0bc3693080e4e0d2979"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // If already logged in → go to admin
+    onAuthStateChanged(auth, user => {
+      if (user) window.location.href = "admin.html";
+    });
+
+    // Toggle password visibility
+    document.getElementById("togglePwd").addEventListener("click", () => {
+      const pwd  = document.getElementById("loginPassword");
+      const icon = document.querySelector("#togglePwd i");
+      if (pwd.type === "password") { pwd.type = "text";     icon.className = "fa-solid fa-eye-slash"; }
+      else                         { pwd.type = "password"; icon.className = "fa-solid fa-eye"; }
+    });
+
+    // Login form
+    document.getElementById("loginForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const btn      = document.getElementById("loginBtn");
+      const errorDiv = document.getElementById("loginError");
+      const errorMsg = document.getElementById("loginErrorMsg");
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="btn-text">Entrando…</span><div class="btn-spinner"></div>`;
+      errorDiv.classList.add("hidden");
+
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          document.getElementById("loginEmail").value.trim(),
+          document.getElementById("loginPassword").value
+        );
+        window.location.href = "admin.html";
+      } catch (err) {
+        const messages = {
+          "auth/invalid-email":       "Correo electrónico inválido.",
+          "auth/user-not-found":      "No existe una cuenta con ese correo.",
+          "auth/wrong-password":      "Contraseña incorrecta.",
+          "auth/invalid-credential":  "Credenciales incorrectas. Verifica e intenta de nuevo.",
+          "auth/too-many-requests":   "Demasiados intentos. Intenta más tarde."
+        };
+        errorMsg.textContent = messages[err.code] || `Error: ${err.message}`;
+        errorDiv.classList.remove("hidden");
+        btn.disabled = false;
+        btn.innerHTML = `<span class="btn-text">Iniciar sesión</span><i class="fa-solid fa-arrow-right-to-bracket"></i>`;
+      }
+    });
+  </script>
+</body>
+</html>

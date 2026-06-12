@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cargar Semana 2 — GOLNER SPORTS</title>
+  <style>
+    body { font-family: sans-serif; background: #0d1510; color: #fff; padding: 40px; max-width: 600px; margin: auto; }
+    h2   { color: #39ff14; }
+    button { background: #39ff14; color: #000; border: none; padding: 14px 32px; font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+    button:disabled { background: #555; color: #888; cursor: not-allowed; }
+    #log { margin-top: 24px; font-size: 13px; line-height: 1.8; color: #a0ff60; white-space: pre-wrap; }
+    .err { color: #ff4444; }
+  </style>
+</head>
+<body>
+  <h2>Cargar partidos — Semana 2</h2>
+  <p style="color:rgba(255,255,255,0.6)">Esto agregará los 24 partidos de la Semana 2 a Firestore.<br>Si algún partido ya existe, se ignorará (no se duplica).</p>
+  <button id="btn" onclick="loadMatches()">⚽ Cargar Semana 2</button>
+  <div id="log"></div>
+
+  <script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
+      authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
+      projectId:         "conteo-de-puntos-golner-sports",
+      storageBucket:     "conteo-de-puntos-golner-sports.firebasestorage.app",
+      messagingSenderId: "440898623228",
+      appId:             "1:440898623228:web:e4c0bc3693080e4e0d2979"
+    };
+
+    const app = initializeApp(firebaseConfig, "loader");
+    const db  = getFirestore(app);
+
+    const WEEK2 = [
+      // Jueves 18 junio
+      { home: "República Checa", away: "Sudáfrica",         date: "2026-06-18T10:00" },
+      { home: "Suiza",           away: "Bosnia Herzegovina", date: "2026-06-18T13:00" },
+      { home: "Canadá",          away: "Qatar",              date: "2026-06-18T16:00" },
+      { home: "México",          away: "Corea del Sur",      date: "2026-06-18T19:00" },
+      // Viernes 19 junio
+      { home: "Estados Unidos",  away: "Australia",          date: "2026-06-19T13:00" },
+      { home: "Escocia",         away: "Marruecos",          date: "2026-06-19T16:00" },
+      { home: "Brasil",          away: "Haití",              date: "2026-06-19T18:30" },
+      { home: "Turquía",         away: "Paraguay",           date: "2026-06-19T21:00" },
+      // Sábado 20 junio
+      { home: "Países Bajos",    away: "Suecia",             date: "2026-06-20T11:00" },
+      { home: "Alemania",        away: "Costa de Marfil",    date: "2026-06-20T14:00" },
+      { home: "Ecuador",         away: "Curazao",            date: "2026-06-20T18:00" },
+      { home: "Túnez",           away: "Japón",              date: "2026-06-20T22:00" },
+      // Domingo 21 junio
+      { home: "España",          away: "Arabia Saudita",     date: "2026-06-21T10:00" },
+      { home: "Bélgica",         away: "Irán",               date: "2026-06-21T13:00" },
+      { home: "Uruguay",         away: "Cabo Verde",         date: "2026-06-21T16:00" },
+      { home: "Nueva Zelanda",   away: "Egipto",             date: "2026-06-21T19:00" },
+      // Lunes 22 junio
+      { home: "Argentina",       away: "Austria",            date: "2026-06-22T11:00" },
+      { home: "Francia",         away: "Irak",               date: "2026-06-22T15:00" },
+      { home: "Noruega",         away: "Senegal",            date: "2026-06-22T18:00" },
+      { home: "Jordania",        away: "Argelia",            date: "2026-06-22T21:00" },
+      // Martes 23 junio
+      { home: "Portugal",        away: "Uzbekistán",         date: "2026-06-23T11:00" },
+      { home: "Inglaterra",      away: "Ghana",              date: "2026-06-23T14:00" },
+      { home: "Panamá",          away: "Croacia",            date: "2026-06-23T17:00" },
+      { home: "Colombia",        away: "RD Congo",           date: "2026-06-23T20:00" },
+    ];
+
+    function norm(s) {
+      return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+    function matchKey(h, a) { return norm(h) + "_vs_" + norm(a); }
+
+    window.loadMatches = async () => {
+      const btn = document.getElementById("btn");
+      const log = document.getElementById("log");
+      btn.disabled = true;
+      log.textContent = "Leyendo partidos existentes…\n";
+
+      // Get existing matchKeys to avoid duplicates
+      const snap = await getDocs(collection(db, "matches"));
+      const existing = new Set(snap.docs.map(d => d.data().matchKey).filter(Boolean));
+
+      let added = 0, skipped = 0;
+
+      for (const m of WEEK2) {
+        const key = matchKey(m.home, m.away);
+        if (existing.has(key)) {
+          log.textContent += `⏭  Ya existe: ${m.home} vs ${m.away}\n`;
+          skipped++;
+          continue;
+        }
+        await addDoc(collection(db, "matches"), {
+          homeTeam:  m.home,
+          awayTeam:  m.away,
+          matchKey:  key,
+          week:      2,
+          phase:     "groups",
+          played:    false,
+          date:      new Date(m.date),
+          createdAt: serverTimestamp()
+        });
+        log.textContent += `✅ Agregado: ${m.home} vs ${m.away}\n`;
+        added++;
+      }
+
+      log.textContent += `\n🏁 Listo. ${added} partidos agregados, ${skipped} ya existían.`;
+      btn.textContent = "✅ Completado";
+    };
+  </script>
+</body>
+</html>

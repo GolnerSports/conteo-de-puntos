@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── PUBLIC: anyone can read participants & matches (leaderboard)
+    match /participants/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /matches/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── PUBLIC: anyone can read config (except FCM keys)
+    match /config/{docId} {
+      allow read: if docId != 'fcm' || request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── FCM TOKENS: any device can register, only admin can read all
+    match /fcmTokens/{tokenId} {
+      allow write: if true;
+      allow read:  if request.auth != null;
+    }
+
+    // ── ADMIN ONLY: everything else
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

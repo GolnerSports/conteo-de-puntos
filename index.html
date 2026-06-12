@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOLNER SPORTS — Quiniela Mundial 2026</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#39FF14" />
+  <meta name="application-name" content="Golner Sports" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Quiniela Mundial 2026 — Golner Sports" />
+
+  <!-- Apple / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Golner" />
+  <link rel="apple-touch-icon" href="/assets/icon-180.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png" />
+</head>
+<body class="public-page">
+
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-futbol"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">GOLNER SPORTS</span>
+          <span class="brand-sub">Quiniela Mundial 2026</span>
+        </div>
+      </div>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link active"><i class="fa-solid fa-trophy"></i> Tabla</a>
+        <button id="notifBellBtn" onclick="handleNotifBell()" title="Notificaciones" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:20px;padding:6px;line-height:1;-webkit-tap-highlight-color:transparent;transition:color .2s">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+        <a href="login.html" class="nav-link admin-link"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── HERO BANNER ────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><i class="fa-solid fa-earth-americas"></i> MUNDIAL 2026</div>
+      <h1 class="hero-title">Tabla General</h1>
+      <p class="hero-subtitle">Clasificación en tiempo real · Actualización automática</p>
+
+      <div class="phase-indicator" id="phaseIndicator">
+        <div class="phase-dot active"></div>
+        <span id="currentPhaseLabel">Fase de Grupos — Semana 1</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS BAR ──────────────────────────────────────────── -->
+  <section class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-value" id="totalParticipants">—</span>
+        <span class="stat-label">Participantes</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="classifiedCount">—</span>
+        <span class="stat-label">Clasificados</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="eliminatedCount">—</span>
+        <span class="stat-label">Eliminados</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="matchesPlayed">—</span>
+        <span class="stat-label">Partidos jugados</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VISTA: TABLA ─────────────────────────────────────────── -->
+  <main class="main-content pub-view active" id="view-tabla">
+
+    <div class="controls-bar">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Buscar participante…" />
+      </div>
+      <div class="filter-pills">
+        <button class="pill active" data-filter="all">Todos</button>
+        <button class="pill" data-filter="classified">Clasificados</button>
+        <button class="pill" data-filter="risk">En riesgo</button>
+        <button class="pill" data-filter="eliminated">Eliminados</button>
+      </div>
+    </div>
+
+    <!-- Banner de notificaciones -->
+    <div id="notifBanner" style="display:none;margin:0 0 16px;background:rgba(57,255,20,0.07);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:16px 20px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <span style="font-size:28px;line-height:1">🔔</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">Activa las notificaciones</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:12px">Recibe en tu celular:<br>
+            ⚽ Resultados de cada partido · 📊 Tus puntos actualizados · 🏆 Avisos del torneo
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="notifAcceptBtn" style="background:#39FF14;color:#000;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;touch-action:manipulation">Activar notificaciones</button>
+            <button id="notifDismissBtn" style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;touch-action:manipulation">Ahora no</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="leaderboard-wrapper">
+      <div class="leaderboard-header-row">
+        <span class="col-rank">#</span>
+        <span class="col-name">Participante</span>
+        <span class="col-week">Sem 1</span>
+        <span class="col-week">Sem 2</span>
+        <span class="col-week">Sem 3</span>
+        <span class="col-total">Total</span>
+        <span class="col-hits">Aciertos</span>
+        <span class="col-exact">Marcadores</span>
+        <span class="col-status">Estado</span>
+        <span class="col-eye"></span>
+      </div>
+      <div id="leaderboardBody" class="leaderboard-body">
+        <div class="loading-state"><div class="spinner"></div><p>Cargando tabla…</p></div>
+      </div>
+      <div class="cut-line hidden" id="cutLine">
+        <span><i class="fa-solid fa-scissors"></i> LÍNEA DE CORTE — Solo avanzan los de arriba</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="badge badge-classified">Clasificado</span><span>Avanza a la siguiente fase</span></div>
+      <div class="legend-item"><span class="badge badge-risk">En riesgo</span><span>Cerca de la línea de corte</span></div>
+      <div class="legend-item"><span class="badge badge-eliminated">Eliminado</span><span>Fuera del torneo</span></div>
+    </div>
+  </main>
+
+  <!-- ── VISTA: RESULTADOS ─────────────────────────────────────── -->
+  <main class="main-content pub-view" id="view-resultados">
+    <div id="resultsGrouped">
+      <div class="loading-state"><div class="spinner"></div><p>Cargando resultados…</p></div>
+    </div>
+  </main>
+
+  <!-- ── BOTTOM NAV PÚBLICA ────────────────────────────────────── -->
+  <nav class="pub-bottom-nav">
+    <button class="pub-nav-item active" data-view="tabla">
+      <i class="fa-solid fa-trophy"></i>
+      <span>Tabla</span>
+    </button>
+    <button class="pub-nav-item" data-view="resultados" id="navResultados">
+      <i class="fa-solid fa-futbol" id="navResultadosIcon"></i>
+      <span id="navResultadosLabel">Resultados</span>
+    </button>
+  </nav>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+
+    // ── FIREBASE CONFIG (replace with your own) ─────────────────
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
+      authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
+      projectId:         "conteo-de-puntos-golner-sports",
+      storageBucket:     "conteo-de-puntos-golner-sports.firebasestorage.app",
+      messagingSenderId: "440898623228",
+      appId:             "1:440898623228:web:e4c0bc3693080e4e0d2979"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ── STATE ────────────────────────────────────────────────────
+    let allParticipants = [];
+    let currentFilter   = "all";
+    let tournamentConfig = { phase: "groups", week: 1, cutoffPct: 0.4, showCutLine: true };
+
+    // ── REAL-TIME LISTENERS ──────────────────────────────────────
+
+    // Tournament config
+    onSnapshot(doc(db, "config", "tournament"), snap => {
+      if (snap.exists()) tournamentConfig = { ...tournamentConfig, ...snap.data() };
+      updatePhaseLabel();
+      renderLeaderboard();
+    });
+
+    // Participants
+    const participantsQ = query(collection(db, "participants"), orderBy("totalPoints", "desc"));
+    onSnapshot(participantsQ, snap => {
+      allParticipants = snap.docs.map((d, i) => ({ id: d.id, rank: i + 1, ...d.data() }));
+      updateStatsBar();
+      renderLeaderboard();
+    });
+
+    // All matches (for results view)
+    let allMatchesData = [];
+    onSnapshot(query(collection(db, "matches"), orderBy("date", "asc")), snap => {
+      allMatchesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderResultsView();
+      // matches played counter
+      const played = allMatchesData.filter(m => m.played).length;
+      document.getElementById("matchesPlayed").textContent = played;
+      // botón en vivo
+      const hasLive = allMatchesData.some(m => m.live && !m.played);
+      const navIcon  = document.getElementById("navResultadosIcon");
+      const navLabel = document.getElementById("navResultadosLabel");
+      if (hasLive) {
+        navIcon.style.color  = "#ef4444";
+        navLabel.innerHTML   = `<span style="color:#ef4444;animation:pulse-text 1.2s infinite;font-weight:700">● EN VIVO</span>`;
+      } else {
+        navIcon.style.color  = "";
+        navLabel.textContent = "Resultados";
+      }
+    });
+
+    // ── RENDER LEADERBOARD ───────────────────────────────────────
+    function renderLeaderboard() {
+      const body    = document.getElementById("leaderboardBody");
+      const cutLine = document.getElementById("cutLine");
+      const search  = (document.getElementById("searchInput").value || "").toLowerCase();
+
+      const total    = allParticipants.length;
+      const cutRank  = Math.ceil(total * (tournamentConfig.cutoffPct || 0.4));
+      const riskZone = Math.ceil(cutRank * 1.15);
+
+      const medals = ["🥇","🥈","🥉"];
+
+      let filtered = allParticipants.filter(p => {
+        const matchSearch = !search || p.name.toLowerCase().includes(search);
+        const matchFilter =
+          currentFilter === "all"        ? true :
+          currentFilter === "classified" ? p.rank <= cutRank :
+          currentFilter === "risk"       ? (p.rank > cutRank && p.rank <= riskZone) :
+          currentFilter === "eliminated" ? p.status === "eliminated" : true;
+        return matchSearch && matchFilter;
+      });
+
+      if (!filtered.length) {
+        body.innerHTML = `<div class="empty-state"><i class="fa-solid fa-user-slash"></i><p>Sin resultados</p></div>`;
+        cutLine.classList.add("hidden");
+        return;
+      }
+
+      body.innerHTML = filtered.map(p => {
+        const isCut      = p.rank === cutRank && tournamentConfig.showCutLine !== false;
+        const statusInfo = getStatusInfo(p, cutRank, riskZone);
+        const w1 = (p.weekPoints && p.weekPoints[1]) || 0;
+        const w2 = (p.weekPoints && p.weekPoints[2]) || 0;
+        const w3 = (p.weekPoints && p.weekPoints[3]) || 0;
+        const isTop3 = p.rank <= 3;
+        return `
+          ${isCut ? `<div class="inline-cut-line"><span><i class="fa-solid fa-scissors"></i> LÍNEA DE CORTE</span></div>` : ""}
+          <div class="leaderboard-row ${statusInfo.cls} ${isTop3 ? "top-"+p.rank : ""}" data-id="${p.id}">
+            <span class="col-rank">
+              ${isTop3
+                ? `<span class="medal">${medals[p.rank-1]}</span>`
+                : `<span class="rank-num">${p.rank}</span>`}
+            </span>
+            <span class="col-name">
+              <span class="participant-name">${escHtml(p.name)}</span>
+              ${p.rank === 1 ? '<span class="leader-crown"><i class="fa-solid fa-crown"></i></span>' : ""}
+              ${buildHitsInline(p)}
+            </span>
+            <span class="col-week">${w1}</span>
+            <span class="col-week">${w2}</span>
+            <span class="col-week">${w3}</span>
+            <span class="col-total"><strong>${p.totalPoints || 0}</strong></span>
+            <span class="col-hits">${buildWinnersLabel(p)}</span>
+            <span class="col-exact">${buildExactLabel(p)}</span>
+            <span class="col-status"><span class="badge badge-${statusInfo.badge}">${statusInfo.label}</span></span>
+            <span class="col-eye">
+              <button class="eye-btn" onclick="showHitsPopup(event, '${p.id}')" title="Ver aciertos">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </span>
+          </div>`;
+      }).join("");
+
+      if (tournamentConfig.showCutLine !== false && currentFilter === "all" && !search) {
+        cutLine.classList.remove("hidden");
+      } else {
+        cutLine.classList.add("hidden");
+      }
+    }
+
+    function buildHitsInline(p) { return ''; }
+
+    function buildWinnersLabel(p) {
+      const bd = p.matchBreakdown || [];
+      if (!bd.length) return `<span style="color:rgba(255,255,255,0.25)">—</span>`;
+      const played  = bd.length;
+      const winners = bd.filter(m => m.hitWinner || m.hitScore).length;
+      return `<span style="color:rgba(255,255,255,0.9);font-weight:600">${winners}</span><span style="color:rgba(255,255,255,0.35);font-size:12px">/${played}</span>`;
+    }
+
+    function buildExactLabel(p) {
+      const bd = p.matchBreakdown || [];
+      if (!bd.length) return `<span style="color:rgba(255,255,255,0.25)">—</span>`;
+      const played = bd.length;
+      const exact  = bd.filter(m => m.hitScore).length;
+      return `<span style="color:#39FF14;font-weight:600">${exact}</span><span style="color:rgba(255,255,255,0.35);font-size:12px">/${played}</span>`;
+    }
+
+    function getStatusInfo(p, cutRank, riskZone) {
+      const inGroups = (tournamentConfig.phase || "groups") === "groups";
+
+      // Eliminado manual siempre se respeta (lo marcó el admin explícitamente)
+      if (p.status === "eliminated" && !inGroups)
+        return { cls: "row-eliminated", badge: "eliminated", label: "Eliminado" };
+
+      // Durante fase de grupos: nadie es Clasificado ni Eliminado todavía
+      if (inGroups) {
+        if (p.rank <= riskZone) return { cls: "", badge: "active", label: "Activo" };
+        return { cls: "row-risk", badge: "risk", label: "En riesgo" };
+      }
+
+      // Fases eliminatorias
+      if (p.rank <= cutRank)  return { cls: "row-classified", badge: "classified", label: "Clasificado" };
+      if (p.rank <= riskZone) return { cls: "row-risk",       badge: "risk",       label: "En riesgo" };
+      return { cls: "row-eliminated", badge: "eliminated", label: "Eliminado" };
+    }
+
+    // ── RENDER RESULTS VIEW (agrupado por semana/fase) ──────────
+    function renderResultsView() {
+      const container = document.getElementById("resultsGrouped");
+      if (!container) return;
+
+      const liveMatches  = allMatchesData.filter(m => m.live && !m.played);
+      const played       = allMatchesData.filter(m => m.played);
+
+      if (!liveMatches.length && !played.length) {
+        container.innerHTML = `
+          <div class="results-empty">
+            <i class="fa-solid fa-futbol"></i>
+            <p>Aún no hay resultados registrados</p>
+          </div>`;
+        return;
+      }
+
+      // ── Partidos en vivo ──
+      const liveHTML = liveMatches.length ? `
+        <div class="results-week-block">
+          <div class="results-week-title" style="color:#ef4444">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:8px;animation:pulse 1.2s infinite"></span>
+            En Vivo
+          </div>
+          ${liveMatches.map(m => `
+            <div class="result-card" style="border-color:#39ff14;background:rgba(57,255,20,0.06)">
+              <div class="result-card-teams">
+                <div class="result-team">
+                  <span class="result-flag">${flag(m.homeTeam)}</span>
+                  <span class="result-team-name">${escHtml(m.homeTeam)}</span>
+                </div>
+                <div style="text-align:center;flex-shrink:0">
+                  <div class="result-score" style="color:#39ff14">${m.liveHomeScore} - ${m.liveAwayScore}</div>
+                </div>
+                <div class="result-team away-team">
+                  <span class="result-team-name">${escHtml(m.awayTeam)}</span>
+                  <span class="result-flag">${flag(m.awayTeam)}</span>
+                </div>
+              </div>
+            </div>`).join("")}
+        </div>` : "";
+
+      // ── Partidos finalizados ──
+      const sectionOrder = ["Semana 1","Semana 2","Semana 3",
+        "Dieciseisavos","Octavos","Cuartos","Semifinal","Final"];
+      const phaseMap = {
+        groups:"", round_of_16:"Dieciseisavos",
+        round_of_8:"Octavos", quarter_final:"Cuartos",
+        semi_final:"Semifinal", final:"Final"
+      };
+
+      const groups = {};
+      for (const m of played) {
+        const key = m.phase === "groups"
+          ? `Semana ${m.week || 1}`
+          : (phaseMap[m.phase] || m.phase);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(m);
+      }
+
+      const sorted = Object.keys(groups).sort((a,b) => {
+        const ia = sectionOrder.indexOf(a), ib = sectionOrder.indexOf(b);
+        return (ia===-1?99:ia)-(ib===-1?99:ib);
+      });
+
+      const finishedHTML = sorted.map(sec => `
+        <div class="results-week-block">
+          <div class="results-week-title"><i class="fa-solid fa-calendar-days" style="margin-right:6px"></i>${sec}</div>
+          ${groups[sec].map(m => {
+            const homeWin = m.result === "home";
+            const awayWin = m.result === "away";
+            const isDraw  = m.result === "draw";
+            return `
+              <div class="result-card">
+                <div class="result-card-teams">
+                  <div class="result-team ${homeWin ? "winner" : ""}">
+                    <span class="result-flag">${flag(m.homeTeam)}</span>
+                    <span class="result-team-name">${escHtml(m.homeTeam)}</span>
+                  </div>
+                  <div style="text-align:center;flex-shrink:0">
+                    <div class="result-score">${m.homeScore} - ${m.awayScore}</div>
+                    ${isDraw ? `<div class="result-draw-badge">Empate</div>` : ""}
+                    <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;letter-spacing:0.5px">Finalizado</div>
+                  </div>
+                  <div class="result-team away-team ${awayWin ? "winner" : ""}">
+                    <span class="result-team-name">${escHtml(m.awayTeam)}</span>
+                    <span class="result-flag">${flag(m.awayTeam)}</span>
+                  </div>
+                </div>
+              </div>`;
+          }).join("")}
+        </div>`).join("");
+
+      container.innerHTML = liveHTML + finishedHTML;
+    }
+
+    // ── PUBLIC BOTTOM NAV ─────────────────────────────────────────
+    document.querySelectorAll(".pub-nav-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pub-nav-item").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".pub-view").forEach(v => v.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("view-" + btn.dataset.view).classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    // ── STATS BAR ────────────────────────────────────────────────
+    function updateStatsBar() {
+      const total    = allParticipants.length;
+      const inGroups = (tournamentConfig.phase || "groups") === "groups";
+      const cutRank  = Math.ceil(total * (tournamentConfig.cutoffPct || 0.4));
+
+      document.getElementById("totalParticipants").textContent = total;
+
+      if (inGroups) {
+        // En fase de grupos nadie está clasificado ni eliminado todavía
+        document.getElementById("classifiedCount").textContent = 0;
+        document.getElementById("eliminatedCount").textContent = 0;
+      } else {
+        const eliminated = allParticipants.filter(p => p.status === "eliminated" || p.rank > cutRank).length;
+        document.getElementById("classifiedCount").textContent = Math.min(cutRank, total);
+        document.getElementById("eliminatedCount").textContent = Math.max(0, eliminated);
+      }
+    }
+
+    // ── PHASE LABEL ──────────────────────────────────────────────
+    function updatePhaseLabel() {
+      const labels = {
+        groups:        `Fase de Grupos — Semana ${tournamentConfig.week || 1}`,
+        round_of_16:   "Dieciseisavos de Final",
+        round_of_8:    "Octavos de Final",
+        quarter_final: "Cuartos de Final",
+        semi_final:    "Semifinal",
+        final:         "Gran Final"
+      };
+      document.getElementById("currentPhaseLabel").textContent =
+        labels[tournamentConfig.phase] || "Fase de Grupos";
+    }
+
+    // ── SEARCH & FILTER ──────────────────────────────────────────
+    document.getElementById("searchInput").addEventListener("input", renderLeaderboard);
+
+    document.querySelectorAll(".pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pill").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderLeaderboard();
+      });
+    });
+
+    // ── HITS POPUP ───────────────────────────────────────────────
+    let activePopup = null;
+
+    window.showHitsPopup = function(event, id) {
+      event.stopPropagation();
+      // Cerrar popup anterior
+      if (activePopup) { activePopup.remove(); activePopup = null; }
+
+      const p = allParticipants.find(x => x.id === id);
+      if (!p) return;
+
+      const bd      = p.matchBreakdown || [];
+      const played  = bd.length;
+      const winners = bd.filter(m => m.hitWinner || m.hitScore).length;
+      const exact   = bd.filter(m => m.hitScore).length;
+
+      const popup = document.createElement("div");
+      popup.id = "hitsPopup";
+      popup.style.cssText = `
+        position:fixed; z-index:9999;
+        background:#1a2e1a; border:1px solid rgba(57,255,20,0.3);
+        border-radius:10px; padding:12px 16px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.6);
+        font-size:13px; min-width:200px;
+        pointer-events:none;
+      `;
+      const statusInfo = getStatusInfo(p, Math.ceil(allParticipants.length * (tournamentConfig.cutoffPct || 0.4)), Math.ceil(Math.ceil(allParticipants.length * (tournamentConfig.cutoffPct || 0.4)) * 1.15));
+      const badgeColors = { active:"#ffaa00", risk:"#ff6600", classified:"#39FF14", eliminated:"#ff4444" };
+      const badgeColor = badgeColors[statusInfo.badge] || "#fff";
+
+      popup.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px">
+          <div style="font-weight:700;color:#fff;font-size:14px">${escHtml(p.name)}</div>
+          <span style="font-size:11px;font-weight:700;color:${badgeColor};white-space:nowrap">${statusInfo.label}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;gap:16px">
+            <span style="color:rgba(255,255,255,0.5)">Puntos totales</span>
+            <span style="font-weight:700;color:#39FF14">${p.totalPoints || 0}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:16px">
+            <span style="color:rgba(255,255,255,0.5)">Aciertos</span>
+            <span style="font-weight:700;color:#fff">${winners}<span style="color:rgba(255,255,255,0.35);font-weight:400">/${played}</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:16px">
+            <span style="color:rgba(255,255,255,0.5)">Marcadores exactos</span>
+            <span style="font-weight:700;color:#39FF14">${exact}<span style="color:rgba(255,255,255,0.35);font-weight:400">/${played}</span></span>
+          </div>
+        </div>
+      `;
+
+      // Posicionar cerca del toque
+      const x = event.clientX;
+      const y = event.clientY;
+      document.body.appendChild(popup);
+
+      const pw = popup.offsetWidth;
+      const ph = popup.offsetHeight;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      popup.style.left = Math.min(x + 12, vw - pw - 12) + "px";
+      popup.style.top  = Math.min(y + 12, vh - ph - 12) + "px";
+      activePopup = popup;
+
+      // Cerrar al tocar fuera
+      setTimeout(() => {
+        document.addEventListener("click", () => {
+          if (activePopup) { activePopup.remove(); activePopup = null; }
+        }, { once: true });
+      }, 50);
+    }
+
+    // ── UTILS ────────────────────────────────────────────────────
+    function escHtml(str = "") {
+      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    // ── BANDERAS ─────────────────────────────────────────────────
+    const FLAGS = {
+      "México":"🇲🇽","Mexico":"🇲🇽",
+      "Sudáfrica":"🇿🇦","Sudafrica":"🇿🇦",
+      "Arabia Saudí":"🇸🇦","Arabia Saudita":"🇸🇦",
+      "Uruguay":"🇺🇾",
+      "España":"🇪🇸","Espana":"🇪🇸",
+      "Cabo Verde":"🇨🇻",
+      "Alemania":"🇩🇪",
+      "Curazao":"🇨🇼",
+      "Bélgica":"🇧🇪","Belgica":"🇧🇪",
+      "Egipto":"🇪🇬",
+      "EE.UU.":"🇺🇸","Estados Unidos":"🇺🇸",
+      "Paraguay":"🇵🇾",
+      "Australia":"🇦🇺",
+      "Turquía":"🇹🇷","Turquia":"🇹🇷",
+      "Escocia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      "Marruecos":"🇲🇦",
+      "Brasil":"🇧🇷",
+      "Haití":"🇭🇹","Haiti":"🇭🇹",
+      "Países Bajos":"🇳🇱","Paises Bajos":"🇳🇱",
+      "Suecia":"🇸🇪",
+      "Túnez":"🇹🇳","Tunez":"🇹🇳",
+      "Japón":"🇯🇵","Japon":"🇯🇵",
+      "Ecuador":"🇪🇨",
+      "Argentina":"🇦🇷",
+      "Austria":"🇦🇹",
+      "Jordania":"🇯🇴",
+      "Argelia":"🇩🇿",
+      "Francia":"🇫🇷",
+      "Irak":"🇮🇶",
+      "Noruega":"🇳🇴",
+      "Senegal":"🇸🇳",
+      "Portugal":"🇵🇹",
+      "Uzbekistán":"🇺🇿","Uzbekistan":"🇺🇿",
+      "Colombia":"🇨🇴",
+      "RD Congo":"🇨🇩",
+      "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "Ghana":"🇬🇭",
+      "Panamá":"🇵🇦","Panama":"🇵🇦",
+      "Croacia":"🇭🇷",
+      "República Checa":"🇨🇿","Republica Checa":"🇨🇿",
+      "Corea del Sur":"🇰🇷",
+      "Suiza":"🇨🇭",
+      "Bosnia Herzegovina":"🇧🇦","Bosnia":"🇧🇦",
+      "Canadá":"🇨🇦","Canada":"🇨🇦",
+      "Qatar":"🇶🇦",
+      "Irán":"🇮🇷","Iran":"🇮🇷",
+      "Nueva Zelanda":"🇳🇿",
+      "Costa de Marfil":"🇨🇮",
+      // Aliases nombres oficiales
+      "Chequia":"🇨🇿",
+      "Bosnia y Herzegovina":"🇧🇦",
+      "República Democrática del Congo":"🇨🇩","Republica Democratica del Congo":"🇨🇩",
+    };
+    function flag(team) { return FLAGS[team] || "🏳️"; }
+
+  </script>
+
+  <!-- Service Worker + Notificaciones -->
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const VAPID = 'BBcVkIpkjWEKdJNQ7bSuik9YOLggYw15i7GZ-T6XFlWomPprdhm_zdS1hXaG3NROGBSMKmozTbW5Akdbu8ly9Mk';
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
+      authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
+      projectId:         "conteo-de-puntos-golner-sports",
+      storageBucket:     "conteo-de-puntos-golner-sports.firebasestorage.app",
+      messagingSenderId: "440898623228",
+      appId:             "1:440898623228:web:e4c0bc3693080e4e0d2979"
+    };
+
+    const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+    const messaging = getMessaging(app);
+
+    // Registrar service worker de FCM
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    }
+
+    // Mostrar banner si aún no ha decidido
+    const notifStatus = localStorage.getItem('golner_notif');
+    if (!notifStatus && 'Notification' in window && Notification.permission === 'default') {
+      document.getElementById('notifBanner').style.display = 'block';
+    }
+
+    async function subscribeToNotifications() {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        localStorage.setItem('golner_notif', 'denied');
+        document.getElementById('notifBanner').style.display = 'none';
+        showPublicToast('🔕 Notificaciones no activadas.');
+        return;
+      }
+      // Permiso concedido — ocultar banner y marcar como activo
+      localStorage.setItem('golner_notif', 'granted');
+      document.getElementById('notifBanner').style.display = 'none';
+      showPublicToast('🔔 ¡Notificaciones activadas! Te avisaremos con los resultados.');
+      // Intentar registrar token FCM (puede fallar en algunos navegadores, no es crítico)
+      try {
+        const token = await getToken(messaging, { vapidKey: VAPID });
+        if (token) {
+          // Usar cookie para deviceId — se comparte entre Safari y PWA en iOS
+          function getCookie(name) {
+            const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return m ? m[2] : null;
+          }
+          function setCookie(name, value) {
+            const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+            document.cookie = `${name}=${value};expires=${exp};path=/;SameSite=Lax`;
+          }
+          let deviceId = getCookie('golner_did') || localStorage.getItem('golner_device_id');
+          if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          }
+          // Guardar en ambos para máxima compatibilidad
+          setCookie('golner_did', deviceId);
+          localStorage.setItem('golner_device_id', deviceId);
+
+          await setDoc(doc(db, 'fcmTokens', deviceId), {
+            token,
+            deviceId,
+            updatedAt: serverTimestamp(),
+            userAgent: navigator.userAgent.slice(0, 200)
+          });
+        }
+      } catch (e) {
+        console.warn('FCM token error (no crítico):', e);
+      }
+    }
+
+    function showPublicToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = `position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;background:#1a2e1a;border:1px solid rgba(57,255,20,0.4);border-radius:12px;padding:12px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font-size:14px;font-weight:600;color:#fff;text-align:center;animation:rowFadeIn 0.3s ease`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    }
+
+    // Actualizar ícono de campana según estado
+    function updateBellIcon() {
+      const btn = document.getElementById('notifBellBtn');
+      if (!btn) return;
+      const perm = 'Notification' in window ? Notification.permission : 'default';
+      if (perm === 'granted') {
+        btn.style.color = '#39FF14';
+        btn.title = 'Notificaciones activas';
+      } else if (perm === 'denied') {
+        btn.style.color = 'rgba(255,255,255,0.25)';
+        btn.title = 'Notificaciones bloqueadas';
+      } else {
+        btn.style.color = 'rgba(255,255,255,0.5)';
+        btn.title = 'Activar notificaciones';
+      }
+    }
+    updateBellIcon();
+
+    // Detectar iOS en Safari (no PWA)
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isPWA = window.navigator.standalone === true;
+
+    window.handleNotifBell = async () => {
+      if (!('Notification' in window)) {
+        // iOS Safari sin PWA
+        if (isIOS && !isPWA) {
+          showPublicToast('📲 Agrega la app al inicio y activa ahí las notificaciones.');
+          return;
+        }
+        alert('Tu navegador no soporta notificaciones.');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        // Re-registrar token por si cambió
+        await subscribeToNotifications();
+        updateBellIcon();
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('Las notificaciones están bloqueadas. Actívalas en Ajustes del navegador.');
+        return;
+      }
+      // Pedir permiso
+      await subscribeToNotifications();
+      updateBellIcon();
+    };
+
+    document.getElementById('notifAcceptBtn').addEventListener('click', async () => {
+      await subscribeToNotifications();
+      updateBellIcon();
+    });
+    document.getElementById('notifDismissBtn').addEventListener('click', () => {
+      localStorage.setItem('golner_notif', 'dismissed');
+      document.getElementById('notifBanner').style.display = 'none';
+    });
+
+    // Notificaciones en primer plano — el service worker maneja todo
+    onMessage(messaging, () => { /* suprimido: el SW muestra la notificación */ });
+  </script>
+</body>
+</html>

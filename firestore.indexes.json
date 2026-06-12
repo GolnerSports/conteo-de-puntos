@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "participants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "totalPoints", "order": "DESCENDING" },
+        { "fieldPath": "name",        "order": "ASCENDING"  }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "phase", "order": "ASCENDING" },
+        { "fieldPath": "date",  "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

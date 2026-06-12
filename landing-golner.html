@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOLNER — Quiniela Mundial 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --g:#6EE000; --g2:#85FF0A; --gd:#3d8000;
+  --black:#060606; --s1:#0e0e0e; --s2:#161616; --s3:#1c1c1c;
+  --white:#f4f4f4; --gray:#666; --lgray:#aaa;
+  --border:rgba(255,255,255,0.07);
+}
+
+html{scroll-behavior:smooth;}
+body{
+  background:var(--black);
+  color:var(--white);
+  font-family:'Barlow',sans-serif;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ═══ CUSTOM SCROLLBAR ═══ */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--black);}
+::-webkit-scrollbar-thumb{background:var(--g);border-radius:2px;}
+
+/* ═══ NOISE OVERLAY ═══ */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:0.4;
+}
+
+/* ═══ NAVBAR ═══ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 5vw;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,6,6,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px;letter-spacing:4px;
+}
+.nav-logo .w{color:var(--white);}
+.nav-logo .g{color:var(--g);}
+.nav-pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(110,224,0,0.08);
+  border:1px solid rgba(110,224,0,0.25);
+  border-radius:100px;
+  padding:6px 16px;
+  font-family:'Oswald',sans-serif;
+  font-size:12px;font-weight:400;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--g);
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--g);
+  animation:pulseAnim 1.8s ease-in-out infinite;
+}
+@keyframes pulseAnim{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.6);}}
+
+/* ═══ HERO ═══ */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  padding:80px 5vw 60px;
+  text-align:center;
+}
+
+/* Pitch texture background */
+.hero-pitch{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 110%,rgba(110,224,0,.16) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 40% at 20% -10%,rgba(110,224,0,.05) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 50% at 80% 20%,rgba(110,224,0,.04) 0%,transparent 50%);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
+}
+.hero-circle{
+  position:absolute;
+  border:1px solid rgba(110,224,0,.07);
+  border-radius:50%;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+}
+.hero-circle:nth-child(1){width:500px;height:500px;}
+.hero-circle:nth-child(2){width:750px;height:750px;border-color:rgba(110,224,0,.04);}
+.hero-circle:nth-child(3){width:1000px;height:1000px;border-color:rgba(110,224,0,.025);}
+
+/* Floating balls */
+.fball{
+  position:absolute;font-size:80px;opacity:.04;
+  animation:fbAnim 14s ease-in-out infinite;
+  pointer-events:none;user-select:none;
+}
+.fball:nth-child(1){top:12%;left:6%;font-size:60px;animation-delay:0s;}
+.fball:nth-child(2){top:18%;right:8%;font-size:100px;animation-delay:-5s;}
+.fball:nth-child(3){bottom:20%;left:10%;animation-delay:-9s;}
+.fball:nth-child(4){bottom:12%;right:5%;font-size:50px;animation-delay:-3s;}
+@keyframes fbAnim{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  33%{transform:translateY(-24px) rotate(18deg);}
+  66%{transform:translateY(12px) rotate(-12deg);}
+}
+
+/* HERO CONTENT */
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Oswald',sans-serif;
+  font-size:12px;font-weight:400;letter-spacing:4px;
+  text-transform:uppercase;color:var(--g);
+  margin-bottom:1.8rem;
+  animation:fadeUp .8s ease both;
+}
+.hero-eyebrow::before,.hero-eyebrow::after{
+  content:'';width:30px;height:1px;background:rgba(110,224,0,.4);
+}
+
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(72px,17vw,170px);
+  line-height:.88;letter-spacing:4px;
+  margin-bottom:1rem;
+  animation:fadeUp .8s ease .1s both;
+}
+.hero-title .w{color:var(--white);}
+.hero-title .g{
+  color:var(--g);
+  text-shadow:0 0 60px rgba(110,224,0,.35),0 0 120px rgba(110,224,0,.15);
+}
+
+.hero-world{
+  font-family:'Oswald',sans-serif;
+  font-size:clamp(14px,3vw,22px);
+  font-weight:300;letter-spacing:10px;
+  text-transform:uppercase;color:var(--lgray);
+  margin-bottom:2.5rem;
+  animation:fadeUp .8s ease .2s both;
+}
+.hero-world span{color:var(--white);}
+
+.hero-tagline{
+  font-size:clamp(16px,2.5vw,22px);
+  font-weight:300;line-height:1.7;
+  color:rgba(255,255,255,.6);
+  max-width:620px;margin:0 auto 3rem;
+  animation:fadeUp .8s ease .3s both;
+}
+.hero-tagline strong{color:var(--white);font-weight:600;}
+
+/* CTA BUTTONS */
+.cta-row{
+  display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;
+  animation:fadeUp .8s ease .4s both;
+  margin-bottom:4rem;
+}
+.btn-wa{
+  display:inline-flex;align-items:center;gap:12px;
+  background:#25D366;color:#fff;
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;
+  padding:16px 34px;border-radius:4px;
+  border:none;cursor:pointer;
+  text-decoration:none;
+  transition:background .2s,transform .15s,box-shadow .2s;
+  box-shadow:0 8px 30px rgba(37,211,102,.2);
+}
+.btn-wa:hover{background:#1ebe5a;transform:translateY(-3px);box-shadow:0 14px 40px rgba(37,211,102,.35);}
+.btn-contact{
+  display:inline-flex;align-items:center;gap:12px;
+  background:transparent;color:var(--white);
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;
+  padding:16px 34px;border-radius:4px;
+  border:1px solid rgba(255,255,255,.2);
+  cursor:pointer;text-decoration:none;
+  transition:border-color .2s,color .2s,transform .15s;
+}
+.btn-contact:hover{border-color:var(--g);color:var(--g);transform:translateY(-3px);}
+
+/* HERO STATS */
+.hero-stats{
+  display:flex;gap:0;
+  border:1px solid var(--border);
+  border-radius:6px;overflow:hidden;
+  animation:fadeUp .8s ease .5s both;
+  width:100%;max-width:580px;
+}
+.hstat{
+  flex:1;padding:1.2rem 1rem;
+  text-align:center;
+  border-right:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+  transition:background .2s;
+}
+.hstat:last-child{border-right:none;}
+.hstat:hover{background:rgba(110,224,0,.05);}
+.hstat-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:38px;color:var(--g);line-height:1;
+}
+.hstat-lbl{
+  font-family:'Oswald',sans-serif;
+  font-size:10px;font-weight:300;
+  letter-spacing:2.5px;color:var(--gray);
+  text-transform:uppercase;margin-top:4px;
+}
+
+/* ═══ SECTION COMMONS ═══ */
+.section{padding:7rem 5vw;}
+.section-inner{max-width:1100px;margin:0 auto;}
+.sec-tag{
+  font-family:'Oswald',sans-serif;
+  font-size:11px;font-weight:400;
+  letter-spacing:4px;color:var(--g);
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:.8rem;
+}
+.sec-tag::after{content:'';flex:0 0 40px;height:1px;background:rgba(110,224,0,.3);}
+.sec-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(42px,7vw,80px);
+  line-height:.95;margin-bottom:1.5rem;
+  letter-spacing:2px;
+}
+.sec-body{
+  font-size:17px;line-height:1.8;
+  color:rgba(255,255,255,.5);
+  max-width:520px;
+}
+.sec-body strong{color:var(--white);}
+
+/* ═══ HOW IT WORKS ═══ */
+.how{background:var(--s1);}
+.how-layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5rem;align-items:center;
+}
+.steps{display:flex;flex-direction:column;gap:0;}
+.step{
+  display:flex;gap:1.5rem;align-items:flex-start;
+  padding:1.8rem 0;
+  border-bottom:1px solid var(--border);
+  position:relative;
+  transition:background .2s;
+}
+.step:last-child{border-bottom:none;}
+.step-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;line-height:1;
+  color:rgba(110,224,0,.12);
+  flex-shrink:0;width:44px;
+  transition:color .2s;
+}
+.step:hover .step-num{color:rgba(110,224,0,.35);}
+.step-content{}
+.step-title{
+  font-family:'Oswald',sans-serif;
+  font-size:18px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;
+  color:var(--white);margin-bottom:.4rem;
+}
+.step-desc{
+  font-size:15px;color:rgba(255,255,255,.45);line-height:1.6;
+}
+
+/* Points visual */
+.pts-visual{
+  display:flex;flex-direction:column;gap:1.2rem;
+}
+.pts-card{
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:2rem 2.5rem;
+  display:flex;align-items:center;gap:2rem;
+  transition:border-color .2s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.pts-card::before{
+  content:'';position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+  background:var(--g);
+  transform:scaleY(0);transform-origin:bottom;
+  transition:transform .3s ease;
+}
+.pts-card:hover::before{transform:scaleY(1);}
+.pts-card:hover{border-color:rgba(110,224,0,.3);transform:translateX(6px);}
+.pts-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:64px;color:var(--g);line-height:1;
+  flex-shrink:0;
+  text-shadow:0 0 40px rgba(110,224,0,.25);
+}
+.pts-info-title{
+  font-family:'Oswald',sans-serif;
+  font-size:16px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;
+  color:var(--white);margin-bottom:.3rem;
+}
+.pts-info-desc{font-size:14px;color:rgba(255,255,255,.45);line-height:1.5;}
+
+@media(max-width:760px){.how-layout{grid-template-columns:1fr;gap:3rem;}}
+
+/* ═══ PRIZES ═══ */
+.prizes{background:var(--black);}
+.prizes-grid{
+  display:grid;
+  grid-template-columns:1fr 1.2fr 1fr;
+  gap:1.5rem;margin-top:4rem;
+  align-items:start;
+}
+.prize-card{
+  border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  background:var(--s2);
+  transition:transform .25s,border-color .25s;
+  position:relative;
+}
+.prize-card:hover{transform:translateY(-6px);}
+.prize-card.gold{
+  border-color:var(--g);
+  background:linear-gradient(160deg,rgba(110,224,0,.08) 0%,var(--s2) 50%);
+  transform:translateY(-12px);
+}
+.prize-card.gold:hover{transform:translateY(-16px);}
+.prize-card.silver{border-color:rgba(200,200,200,.2);}
+.prize-card.bronze{border-color:rgba(180,100,30,.25);}
+
+.prize-badge{
+  padding:8px 20px;
+  font-family:'Oswald',sans-serif;
+  font-size:11px;font-weight:500;
+  letter-spacing:3px;text-transform:uppercase;
+  text-align:center;
+}
+.gold .prize-badge{background:var(--g);color:#060606;}
+.silver .prize-badge{background:rgba(200,200,200,.1);color:rgba(200,200,200,.7);}
+.bronze .prize-badge{background:rgba(180,100,30,.15);color:rgba(200,140,60,.8);}
+
+.prize-body{padding:2rem 1.8rem;}
+.prize-icon{font-size:42px;margin-bottom:1rem;line-height:1;display:block;}
+.prize-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:2px;
+  color:var(--white);margin-bottom:.5rem;line-height:1;
+}
+.gold .prize-title{color:var(--g);}
+.prize-sub{font-size:14px;color:rgba(255,255,255,.4);line-height:1.6;}
+
+@media(max-width:700px){
+  .prizes-grid{grid-template-columns:1fr;gap:1rem;}
+  .prize-card.gold{transform:none;}
+  .prize-card.gold:hover{transform:translateY(-4px);}
+}
+
+/* ═══ PREVIEW SECTION ═══ */
+.preview-section{background:var(--s1);padding:7rem 5vw;}
+.preview-inner{max-width:1100px;margin:0 auto;}
+.preview-layout{
+  display:grid;grid-template-columns:1fr 1.1fr;
+  gap:5rem;align-items:center;
+}
+/* Mockup phone/screen frame */
+.mockup-frame{
+  position:relative;
+  background:var(--s2);
+  border:1px solid rgba(110,224,0,0.2);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:
+    0 0 0 1px rgba(110,224,0,0.08),
+    0 40px 80px rgba(0,0,0,0.6),
+    0 0 60px rgba(110,224,0,0.06);
+}
+.mockup-bar{
+  background:var(--s3);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:10px 16px;
+  display:flex;align-items:center;gap:10px;
+}
+.mockup-dots{display:flex;gap:5px;}
+.mockup-dot{width:9px;height:9px;border-radius:50%;}
+.mockup-dot:nth-child(1){background:#ff5f56;}
+.mockup-dot:nth-child(2){background:#ffbd2e;}
+.mockup-dot:nth-child(3){background:#27c93f;}
+.mockup-url{
+  flex:1;background:rgba(255,255,255,0.05);
+  border-radius:4px;padding:4px 12px;
+  font-family:'Barlow',sans-serif;font-size:11px;
+  color:rgba(255,255,255,0.25);letter-spacing:.5px;
+  text-align:center;
+}
+/* Inner scrollable mockup */
+.mockup-body{
+  padding:0;
+  max-height:520px;
+  overflow:hidden;
+  position:relative;
+}
+.mockup-body::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;
+  height:100px;
+  background:linear-gradient(transparent,var(--s2));
+  pointer-events:none;
+}
+/* Mini progress bar */
+.m-prog{background:rgba(255,255,255,0.04);padding:10px 16px;}
+.m-prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.m-prog-lbl{font-family:'Barlow',sans-serif;font-size:9px;font-weight:600;letter-spacing:3px;color:var(--gray);text-transform:uppercase;}
+.m-prog-num{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--g);}
+.m-prog-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;}
+.m-prog-fill{height:100%;background:var(--g);border-radius:100px;transition:width .4s ease;}
+/* Day label */
+.m-day{
+  font-family:'Barlow',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:3px;color:var(--g);text-transform:uppercase;
+  padding:10px 16px 5px;
+  border-bottom:1px solid rgba(110,224,0,0.12);
+  margin-bottom:4px;display:flex;align-items:center;gap:6px;
+}
+/* Match card mini */
+.m-card{
+  margin:4px 8px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:6px;padding:10px 12px;
+  transition:border-color .2s;
+  cursor:pointer;
+}
+.m-card:hover{border-color:rgba(110,224,0,0.2);}
+.m-card.picked{border-color:rgba(110,224,0,0.3);background:rgba(110,224,0,0.03);}
+.m-card-top{display:flex;align-items:center;gap:6px;}
+.m-team{flex:1;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:var(--white);display:flex;align-items:center;gap:5px;}
+.m-team.away{justify-content:flex-end;}
+.m-flag{font-size:14px;line-height:1;}
+.m-btns{display:flex;gap:3px;flex-shrink:0;}
+.m-btn{
+  width:24px;height:24px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:3px;
+  font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;
+  color:var(--gray);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .13s;user-select:none;
+}
+.m-btn:hover{background:rgba(110,224,0,0.12);border-color:rgba(110,224,0,0.3);color:var(--white);}
+.m-btn.on{background:var(--g);border-color:var(--g);color:#060606;font-weight:700;}
+.m-info{font-family:'Barlow',sans-serif;font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.2);text-transform:uppercase;text-align:center;}
+/* Score row */
+.m-score{
+  display:flex;align-items:center;gap:7px;
+  margin-top:7px;padding-top:7px;
+  border-top:1px solid rgba(255,255,255,0.04);
+}
+.m-sc-lbl{font-family:'Barlow',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(110,224,0,0.5);text-transform:uppercase;flex-shrink:0;}
+.m-sc-wrap{display:flex;align-items:center;gap:5px;}
+.m-sc-input{
+  width:32px;height:24px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:3px;
+  font-family:'Bebas Neue',sans-serif;font-size:14px;
+  color:var(--white);text-align:center;outline:none;
+}
+.m-sc-input:focus{border-color:rgba(110,224,0,0.4);}
+.m-sc-input::-webkit-outer-spin-button,.m-sc-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.m-sc-input[type=number]{-moz-appearance:textfield;}
+.m-sc-dash{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--gray);}
+.m-sc-hint{font-family:'Barlow',sans-serif;font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1px;}
+
+@media(max-width:800px){.preview-layout{grid-template-columns:1fr;gap:3rem;}}
+
+.phases-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:1px;
+  border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;
+  margin-top:3.5rem;
+}
+.phase{
+  background:var(--s2);
+  padding:2rem 1.5rem;
+  text-align:center;
+  border-right:1px solid var(--border);
+  transition:background .2s;
+  position:relative;
+}
+.phase:last-child{border-right:none;}
+.phase:hover{background:rgba(110,224,0,.04);}
+.phase-icon{font-size:32px;display:block;margin-bottom:.8rem;line-height:1;}
+.phase-name{
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--white);margin-bottom:.4rem;
+}
+.phase-detail{font-size:13px;color:var(--gray);}
+.phase-arrow{
+  position:absolute;right:-8px;top:50%;
+  transform:translateY(-50%);
+  font-size:14px;color:rgba(110,224,0,.35);
+  z-index:1;
+}
+@media(max-width:700px){.phase-arrow{display:none;}}
+
+/* ═══ PRICE SECTION ═══ */
+.price-section{
+  background:var(--black);
+  padding:7rem 5vw;
+}
+.price-inner{
+  max-width:700px;margin:0 auto;
+  text-align:center;
+}
+.price-amount{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(90px,18vw,160px);
+  line-height:1;letter-spacing:4px;
+  color:var(--g);
+  text-shadow:0 0 80px rgba(110,224,0,.3),0 0 200px rgba(110,224,0,.1);
+  margin:1.5rem 0 .5rem;
+}
+.price-amount sup{
+  font-size:.3em;vertical-align:top;
+  margin-top:.6em;color:rgba(110,224,0,.7);
+}
+.price-label{
+  font-family:'Oswald',sans-serif;
+  font-size:13px;font-weight:300;
+  letter-spacing:5px;text-transform:uppercase;
+  color:var(--lgray);margin-bottom:2.5rem;
+}
+.price-includes{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:.8rem;margin-bottom:3rem;
+  text-align:left;
+}
+.pi-item{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:15px;color:rgba(255,255,255,.55);
+  padding:.8rem 1rem;
+  background:var(--s2);border-radius:4px;
+  border:1px solid var(--border);
+}
+.pi-item .pi-icon{color:var(--g);font-size:16px;flex-shrink:0;margin-top:1px;}
+@media(max-width:480px){.price-includes{grid-template-columns:1fr;}}
+
+/* LIMITED BADGE */
+.limited-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,60,60,.08);
+  border:1px solid rgba(255,60,60,.25);
+  border-radius:100px;
+  padding:8px 24px;
+  font-family:'Oswald',sans-serif;
+  font-size:12px;font-weight:500;letter-spacing:3px;
+  text-transform:uppercase;color:rgba(255,100,100,.9);
+  margin-bottom:2.5rem;
+}
+.limited-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,80,80,.9);
+  animation:pulseAnim 1.4s ease-in-out infinite;
+}
+
+/* ═══ BIG CTA ═══ */
+.big-cta{
+  background:var(--g);
+  padding:7rem 5vw;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.big-cta::before{
+  content:'GOLNER';
+  position:absolute;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:350px;letter-spacing:20px;
+  color:rgba(0,0,0,.05);
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  white-space:nowrap;pointer-events:none;
+  line-height:1;
+}
+.cta-tag{
+  font-family:'Oswald',sans-serif;
+  font-size:11px;font-weight:400;
+  letter-spacing:4px;text-transform:uppercase;
+  color:rgba(0,0,0,.5);
+  margin-bottom:.8rem;
+}
+.cta-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(48px,9vw,90px);
+  line-height:.95;letter-spacing:2px;
+  color:#060606;
+  margin-bottom:1.5rem;
+}
+.cta-sub{
+  font-size:18px;color:rgba(0,0,0,.55);
+  margin-bottom:3rem;
+  max-width:500px;margin-left:auto;margin-right:auto;
+}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.btn-dark{
+  display:inline-flex;align-items:center;gap:12px;
+  background:#060606;color:var(--g);
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;
+  padding:18px 40px;border-radius:4px;
+  border:none;cursor:pointer;text-decoration:none;
+  transition:background .2s,transform .15s;
+  box-shadow:0 8px 30px rgba(0,0,0,.3);
+}
+.btn-dark:hover{background:#111;transform:translateY(-3px);}
+.btn-dark-outline{
+  display:inline-flex;align-items:center;gap:12px;
+  background:transparent;color:#060606;
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:2px;
+  text-transform:uppercase;
+  padding:18px 40px;border-radius:4px;
+  border:2px solid rgba(0,0,0,.3);
+  cursor:pointer;text-decoration:none;
+  transition:border-color .2s,transform .15s;
+}
+.btn-dark-outline:hover{border-color:rgba(0,0,0,.7);transform:translateY(-3px);}
+
+/* ═══ TERMS MODAL ═══ */
+.terms-modal-overlay{
+  display:none;
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.85);
+  backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;
+  padding:1.5rem;
+}
+.terms-modal-overlay.open{display:flex;}
+.terms-modal{
+  background:var(--s2);
+  border:1px solid rgba(110,224,0,.2);
+  border-radius:14px;
+  width:100%;max-width:760px;
+  max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 60px rgba(110,224,0,.06);
+  animation:modalIn .3s ease;
+}
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(24px) scale(.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.terms-modal-header{
+  padding:1.4rem 1.8rem;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.terms-modal-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:26px;letter-spacing:3px;
+  color:var(--white);
+  display:flex;align-items:center;gap:10px;
+}
+.terms-modal-title span{color:var(--g);}
+.terms-modal-close{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  color:var(--lgray);font-size:18px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,color .2s;flex-shrink:0;
+}
+.terms-modal-close:hover{background:rgba(255,80,80,.15);color:#fff;border-color:rgba(255,80,80,.3);}
+.terms-modal-body{
+  overflow-y:auto;
+  padding:1.6rem 1.8rem;
+  flex:1;
+}
+.terms-modal-body::-webkit-scrollbar{width:3px;}
+.terms-modal-body::-webkit-scrollbar-track{background:transparent;}
+.terms-modal-body::-webkit-scrollbar-thumb{background:var(--g);border-radius:2px;}
+.terms-modal-intro{
+  font-size:14px;color:rgba(255,255,255,.4);
+  line-height:1.7;margin-bottom:1.4rem;
+  padding-bottom:1.2rem;
+  border-bottom:1px solid var(--border);
+}
+.terms-list{
+  display:flex;flex-direction:column;gap:.5rem;
+}
+.terms-item{
+  display:flex;gap:1rem;align-items:flex-start;
+  padding:.9rem 1.1rem;
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--border);
+  border-radius:6px;
+  transition:border-color .2s,background .2s;
+}
+.terms-item:hover{
+  border-color:rgba(110,224,0,.15);
+  background:rgba(110,224,0,.02);
+}
+.terms-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;color:rgba(110,224,0,.3);
+  line-height:1.2;flex-shrink:0;width:26px;
+  text-align:right;transition:color .2s;
+}
+.terms-item:hover .terms-num{color:rgba(110,224,0,.6);}
+.terms-text{
+  font-size:13.5px;line-height:1.75;
+  color:rgba(255,255,255,.45);
+}
+.terms-text strong{color:rgba(255,255,255,.78);font-weight:600;}
+.terms-notice{
+  margin-top:1.2rem;
+  padding:1rem 1.3rem;
+  background:rgba(110,224,0,.04);
+  border:1px solid rgba(110,224,0,.15);
+  border-radius:6px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.terms-notice-icon{font-size:16px;flex-shrink:0;margin-top:2px;}
+.terms-notice-text{font-size:12.5px;color:rgba(255,255,255,.38);line-height:1.7;}
+.terms-notice-text strong{color:rgba(110,224,0,.75);font-weight:600;}
+.terms-modal-footer{
+  padding:1rem 1.8rem;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;flex-shrink:0;
+}
+.terms-close-btn{
+  font-family:'Oswald',sans-serif;
+  font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  padding:10px 28px;border-radius:4px;
+  background:rgba(110,224,0,.1);
+  border:1px solid rgba(110,224,0,.3);
+  color:var(--g);cursor:pointer;
+  transition:background .2s,transform .15s;
+}
+.terms-close-btn:hover{background:rgba(110,224,0,.2);transform:translateY(-1px);}
+
+/* ═══ FOOTER ═══ */
+footer{
+  background:#030303;
+  padding:3rem 5vw;
+  border-top:1px solid var(--border);
+}
+.footer-inner{
+  max-width:1100px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1.5rem;
+}
+.f-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:4px;
+}
+.f-logo .w{color:var(--white);}
+.f-logo .g{color:var(--g);}
+.f-sub{
+  font-family:'Oswald',sans-serif;
+  font-size:10px;font-weight:300;
+  letter-spacing:3px;color:var(--gray);
+  text-transform:uppercase;margin-top:2px;
+}
+.f-copy{
+  font-size:13px;color:rgba(255,255,255,.18);
+  text-align:right;
+}
+.f-terms-link{
+  font-family:'Oswald',sans-serif;
+  font-size:11px;font-weight:300;
+  letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.25);
+  text-decoration:none;
+  transition:color .2s;
+}
+.f-terms-link:hover{color:var(--g);}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(30px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:.1s;}
+.reveal-delay-2{transition-delay:.2s;}
+.reveal-delay-3{transition-delay:.3s;}
+.reveal-delay-4{transition-delay:.4s;}
+
+/* ═══ WA SVG ═══ */
+.wa-svg{width:20px;height:20px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span class="w">GOL</span><span class="g">NER</span></div>
+  <div class="nav-pill"><span class="pulse"></span>Semana 1 abierta</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-pitch"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-circle"></div>
+  <div class="hero-circle"></div>
+  <div class="hero-circle"></div>
+  <div class="fball">⚽</div>
+  <div class="fball">⚽</div>
+  <div class="fball">⚽</div>
+  <div class="fball">⚽</div>
+
+  <div class="hero-eyebrow">Quiniela Oficial · Mundial 2026</div>
+
+  <div class="hero-title">
+    <span class="w">GOL</span><span class="g">NER</span>
+  </div>
+
+  <div class="hero-world">
+    <span>México · USA · Canadá</span> &nbsp;·&nbsp; 11 Junio – 19 Julio 2026
+  </div>
+
+  <p class="hero-tagline">
+    El Mundial no solo se ve — <strong>se juega.</strong><br>
+    Predice, compite y vive el fútbol más grande del planeta<br>como nunca antes lo habías vivido.
+  </p>
+
+  <div class="cta-row">
+    <a href="https://chat.whatsapp.com/HNJH4lzE3q9FbA6kEMHujO?mode=gi_t" target="_blank" class="btn-wa">
+      <svg class="wa-svg" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      Unirme al grupo oficial
+    </a>
+    <a href="https://wa.me/message/RV36FDF6527YN1" target="_blank" class="btn-contact">
+      <svg class="wa-svg" viewBox="0 0 24 24" fill="currentColor" style="opacity:.7"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      Número de contacto
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">64</div><div class="hstat-lbl">Partidos totales</div></div>
+    <div class="hstat"><div class="hstat-num">48</div><div class="hstat-lbl">Selecciones</div></div>
+    <div class="hstat"><div class="hstat-num">7</div><div class="hstat-lbl">Semanas de juego</div></div>
+    <div class="hstat"><div class="hstat-num">3</div><div class="hstat-lbl">Países sede</div></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section how" id="como">
+  <div class="section-inner">
+    <div class="how-layout">
+      <div>
+        <div class="sec-tag reveal">Mecánica del juego</div>
+        <div class="sec-title reveal reveal-delay-1">Así<br>funciona<br>GOLNER</div>
+        <div class="steps">
+          <div class="step reveal reveal-delay-1">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <div class="step-title">Regístrate</div>
+              <div class="step-desc">Paga tu inscripción de $499 MXN y obtén acceso completo a la plataforma por todo el Mundial.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-2">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <div class="step-title">Predice cada jornada</div>
+              <div class="step-desc">Selecciona el ganador y el marcador exacto de cada partido antes de que arranque la jornada.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-3">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <div class="step-title">Acumula puntos</div>
+              <div class="step-desc">Partido acertado = 3 puntos. Marcador exacto = 5 puntos. Cada detalle cuenta para subir en el ranking.</div>
+            </div>
+          </div>
+          <div class="step reveal reveal-delay-4">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <div class="step-title">Gana los premios</div>
+              <div class="step-desc">Los mejores de cada fase avanzan a la siguiente ronda. El que más puntos acumule se lleva el primer lugar.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal reveal-delay-2">
+        <div class="pts-visual">
+          <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--g);margin-bottom:.5rem;">Sistema de puntuación</div>
+          <div class="pts-card">
+            <div class="pts-num">3</div>
+            <div>
+              <div class="pts-info-title">Partido acertado</div>
+              <div class="pts-info-desc">Predices correctamente quién gana el partido o si termina en empate.</div>
+            </div>
+          </div>
+          <div class="pts-card">
+            <div class="pts-num">5</div>
+            <div>
+              <div class="pts-info-title">Resultado exacto</div>
+              <div class="pts-info-desc">Aciertas el marcador final completo del partido. Por ejemplo: México 2 – Sudáfrica 0.</div>
+            </div>
+          </div>
+          <div style="background:var(--s3);border-radius:6px;padding:1.4rem 1.6rem;border:1px solid var(--border);margin-top:.5rem;">
+            <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lgray);margin-bottom:.6rem;">Nota importante</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.4);line-height:1.6;">Si aciertas el marcador exacto obtienes los 5 puntos. Si solo aciertas el ganador sin el marcador exacto, obtienes 3 puntos.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIZES -->
+<section class="section prizes" id="premios">
+  <div class="section-inner">
+    <div class="sec-tag reveal">Premios</div>
+    <div class="sec-title reveal reveal-delay-1">El que más<br>sabe,<br>más gana.</div>
+    <div class="prizes-grid">
+      <div class="prize-card silver reveal reveal-delay-1">
+        <div class="prize-badge">2° Lugar</div>
+        <div class="prize-body">
+          <span class="prize-icon">🥈</span>
+          <div class="prize-title">Cena Wok & Wings</div>
+          <div class="prize-sub">Una cena especial para celebrar tu logro en el restaurante Wok & Wings.</div>
+        </div>
+      </div>
+      <div class="prize-card gold reveal">
+        <div class="prize-badge">1° Lugar — Gran Premio</div>
+        <div class="prize-body">
+          <span class="prize-icon">💰</span>
+          <div class="prize-title">$10,000 MXN</div>
+          <div class="prize-sub">Diez mil pesos en efectivo para el ganador absoluto de la quiniela. Garantizado.</div>
+          <div style="margin-top:1.2rem;padding:.8rem 1rem;background:rgba(110,224,0,.08);border:1px solid rgba(110,224,0,.2);border-radius:4px;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1.5px;color:var(--g);text-transform:uppercase;">En efectivo · Garantizado</div>
+        </div>
+      </div>
+      <div class="prize-card bronze reveal reveal-delay-2">
+        <div class="prize-badge">3° Lugar</div>
+        <div class="prize-body">
+          <span class="prize-icon">🥉</span>
+          <div class="prize-title">Cupón Innovasport</div>
+          <div class="prize-sub">$1,000 pesos en cupón para canjear en cualquier tienda Innovasport del país.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIFA SORPRESA -->
+    <div class="reveal reveal-delay-3" style="margin-top:2.5rem;position:relative;overflow:hidden;border-radius:12px;border:1px solid rgba(255,200,0,0.25);background:linear-gradient(135deg,rgba(255,180,0,0.06) 0%,rgba(255,100,0,0.04) 50%,rgba(255,180,0,0.03) 100%);">
+      <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,180,0,0.12),transparent 70%);pointer-events:none;"></div>
+      <div style="padding:2rem 2.5rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+        <div style="font-size:56px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 20px rgba(255,180,0,0.4));">🎰</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:400;letter-spacing:4px;text-transform:uppercase;color:rgba(255,180,0,0.8);margin-bottom:.4rem;display:flex;align-items:center;gap:8px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:rgba(255,180,0,0.9);animation:pulseAnim 1.4s ease-in-out infinite;display:inline-block;"></span>
+            Exclusivo para participantes
+          </div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:2px;color:#fff;line-height:1;margin-bottom:.6rem;">
+            Rifas Sorpresa 🎁
+          </div>
+          <div style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.7;max-width:520px;">
+            Además de los premios principales, habrá <strong style="color:var(--white)">rifas sorpresa con premios increíbles</strong> a lo largo del torneo — exclusivas para todos los participantes registrados en GOLNER.
+            <br>Entre más activo estés, más oportunidades tendrás de ganar.
+          </div>
+        </div>
+        <div style="flex-shrink:0;text-align:center;">
+          <div style="background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:10px;padding:1.2rem 1.5rem;">
+            <div style="font-size:32px;margin-bottom:.4rem;">🎟️</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:rgba(255,200,0,0.9);line-height:1;">Para todos</div>
+            <div style="font-family:'Oswald',sans-serif;font-size:10px;font-weight:300;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-top:3px;">los participantes</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(255,180,0,0.07);border-top:1px solid rgba(255,180,0,0.12);padding:.7rem 2.5rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:7px;font-family:'Barlow',sans-serif;font-size:13px;color:rgba(255,255,255,0.4);">
+          <span style="color:rgba(255,180,0,0.7);">✦</span> Premios sorpresa durante el torneo
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-family:'Barlow',sans-serif;font-size:13px;color:rgba(255,255,255,0.4);">
+          <span style="color:rgba(255,180,0,0.7);">✦</span> Exclusivo para participantes registrados
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-family:'Barlow',sans-serif;font-size:13px;color:rgba(255,255,255,0.4);">
+          <span style="color:rgba(255,180,0,0.7);">✦</span> Anuncios por el grupo oficial de WhatsApp
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PREVIEW -->
+<section class="preview-section" id="preview">
+  <div class="preview-inner">
+    <div class="preview-layout">
+
+      <!-- LEFT: Text -->
+      <div>
+        <div class="sec-tag reveal">Vista previa</div>
+        <div class="sec-title reveal reveal-delay-1">Predice cada<br>partido<br>en segundos</div>
+        <div class="sec-body reveal reveal-delay-2" style="margin-bottom:2rem;">
+          La quiniela es <strong>rápida e intuitiva</strong>. Selecciona quién gana con un toque —
+          Local, Empate o Visitante — y escribe el marcador que predices.<br><br>
+          Cada partido vale hasta <strong style="color:var(--g)">5 puntos</strong> si aciertas el marcador exacto.
+          Cuantos más puntos acumules, más alto subes en el ranking.
+        </div>
+        <div class="reveal reveal-delay-3" style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:2.5rem;">
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,.55);">
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(110,224,0,.12);border:1px solid rgba(110,224,0,.3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--g);flex-shrink:0;">1</span>
+            Elige <strong style="color:var(--white)">1</strong> (local), <strong style="color:var(--white)">X</strong> (empate) o <strong style="color:var(--white)">2</strong> (visitante)
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,.55);">
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(110,224,0,.12);border:1px solid rgba(110,224,0,.3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--g);flex-shrink:0;">2</span>
+            Escribe el marcador que predices (ej. <strong style="color:var(--white)">2 – 0</strong>)
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,.55);">
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(110,224,0,.12);border:1px solid rgba(110,224,0,.3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--g);flex-shrink:0;">3</span>
+            Envía todo con un clic por <strong style="color:var(--white)">WhatsApp</strong>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-4">
+          <a href="https://chat.whatsapp.com/HNJH4lzE3q9FbA6kEMHujO?mode=gi_t" target="_blank" class="btn-wa" style="display:inline-flex;">
+            <svg class="wa-svg" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+            Quiero participar
+          </a>
+        </div>
+      </div>
+
+      <!-- RIGHT: Mockup -->
+      <div class="reveal reveal-delay-2">
+        <div class="mockup-frame">
+          <div class="mockup-bar">
+            <div class="mockup-dots">
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+            </div>
+            <div class="mockup-url">golner.mx · Semana 1</div>
+          </div>
+
+          <div class="mockup-body" id="mockupBody">
+
+            <div style="background:linear-gradient(90deg,rgba(110,224,0,0.07),transparent);padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--g);">GOLNER</div>
+              <div style="font-family:'Barlow',sans-serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;">Semana 1 · 24 partidos</div>
+            </div>
+
+            <div style="padding:10px 16px 4px;">
+              <div style="font-family:'Barlow',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--g);text-transform:uppercase;margin-bottom:2px;display:flex;align-items:center;gap:6px;">SELECCIONA TU RESULTADO <span style="flex:1;height:1px;background:rgba(110,224,0,0.2);display:block;"></span></div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--white);">SEMANA 1 — MUNDIAL 2026</div>
+            </div>
+
+            <div class="m-prog">
+              <div class="m-prog-row">
+                <span class="m-prog-lbl">Progreso</span>
+                <span class="m-prog-num" id="mProgNum">0 / 24</span>
+              </div>
+              <div class="m-prog-bar"><div class="m-prog-fill" id="mProgFill" style="width:0%"></div></div>
+            </div>
+
+            <div class="m-day">⚽ Jueves 11 Jun 2026</div>
+
+            <div class="m-card" data-mid="1">
+              <div class="m-card-top">
+                <div class="m-team"><span class="m-flag">🇲🇽</span>México</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;">
+                  <div class="m-btns">
+                    <div class="m-btn" data-v="1">1</div>
+                    <div class="m-btn" data-v="X">X</div>
+                    <div class="m-btn" data-v="2">2</div>
+                  </div>
+                  <div class="m-info">Grupo A · CDMX</div>
+                </div>
+                <div class="m-team away">Sudáfrica<span class="m-flag">🇿🇦</span></div>
+              </div>
+              <div class="m-score">
+                <span class="m-sc-lbl">Marcador:</span>
+                <div class="m-sc-wrap">
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                  <span class="m-sc-dash">–</span>
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                </div>
+                <span class="m-sc-hint">opcional · +5 pts</span>
+              </div>
+            </div>
+
+            <div class="m-card" data-mid="2">
+              <div class="m-card-top">
+                <div class="m-team"><span class="m-flag">🇰🇷</span>Corea del Sur</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;">
+                  <div class="m-btns">
+                    <div class="m-btn" data-v="1">1</div>
+                    <div class="m-btn" data-v="X">X</div>
+                    <div class="m-btn" data-v="2">2</div>
+                  </div>
+                  <div class="m-info">Grupo A · Guadalajara</div>
+                </div>
+                <div class="m-team away">Chequia<span class="m-flag">🇨🇿</span></div>
+              </div>
+              <div class="m-score">
+                <span class="m-sc-lbl">Marcador:</span>
+                <div class="m-sc-wrap">
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                  <span class="m-sc-dash">–</span>
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                </div>
+                <span class="m-sc-hint">opcional · +5 pts</span>
+              </div>
+            </div>
+
+            <div class="m-day">⚽ Viernes 12 Jun 2026</div>
+
+            <div class="m-card" data-mid="3">
+              <div class="m-card-top">
+                <div class="m-team"><span class="m-flag">🇨🇦</span>Canadá</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;">
+                  <div class="m-btns">
+                    <div class="m-btn" data-v="1">1</div>
+                    <div class="m-btn" data-v="X">X</div>
+                    <div class="m-btn" data-v="2">2</div>
+                  </div>
+                  <div class="m-info">Grupo B · Toronto</div>
+                </div>
+                <div class="m-team away">Bosnia<span class="m-flag">🇧🇦</span></div>
+              </div>
+              <div class="m-score">
+                <span class="m-sc-lbl">Marcador:</span>
+                <div class="m-sc-wrap">
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                  <span class="m-sc-dash">–</span>
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                </div>
+                <span class="m-sc-hint">opcional · +5 pts</span>
+              </div>
+            </div>
+
+            <div class="m-card" data-mid="4">
+              <div class="m-card-top">
+                <div class="m-team"><span class="m-flag">🇺🇸</span>EE.UU.</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;">
+                  <div class="m-btns">
+                    <div class="m-btn" data-v="1">1</div>
+                    <div class="m-btn" data-v="X">X</div>
+                    <div class="m-btn" data-v="2">2</div>
+                  </div>
+                  <div class="m-info">Grupo D · Los Ángeles</div>
+                </div>
+                <div class="m-team away">Paraguay<span class="m-flag">🇵🇾</span></div>
+              </div>
+              <div class="m-score">
+                <span class="m-sc-lbl">Marcador:</span>
+                <div class="m-sc-wrap">
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                  <span class="m-sc-dash">–</span>
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                </div>
+                <span class="m-sc-hint">opcional · +5 pts</span>
+              </div>
+            </div>
+
+            <div class="m-day">⚽ Sábado 13 Jun 2026</div>
+
+            <div class="m-card" data-mid="5">
+              <div class="m-card-top">
+                <div class="m-team"><span class="m-flag">🇧🇷</span>Brasil</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;">
+                  <div class="m-btns">
+                    <div class="m-btn" data-v="1">1</div>
+                    <div class="m-btn" data-v="X">X</div>
+                    <div class="m-btn" data-v="2">2</div>
+                  </div>
+                  <div class="m-info">Grupo C</div>
+                </div>
+                <div class="m-team away">Marruecos<span class="m-flag">🇲🇦</span></div>
+              </div>
+              <div class="m-score">
+                <span class="m-sc-lbl">Marcador:</span>
+                <div class="m-sc-wrap">
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                  <span class="m-sc-dash">–</span>
+                  <input class="m-sc-input" type="number" min="0" max="20" placeholder="0">
+                </div>
+                <span class="m-sc-hint">opcional · +5 pts</span>
+              </div>
+            </div>
+
+            <div style="height:24px;"></div>
+          </div>
+
+          <div style="background:var(--s3);border-top:1px solid rgba(255,255,255,0.06);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-family:'Barlow',sans-serif;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;">+ 19 partidos más...</div>
+            <div style="background:#25D366;color:#fff;font-family:'Barlow',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:3px;display:flex;align-items:center;gap:5px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+              Enviar
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:1rem;font-family:'Barlow',sans-serif;font-size:12px;color:rgba(255,255,255,0.2);letter-spacing:1px;">
+          Haz clic en los botones — ¡es interactivo!
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PHASES -->
+<section class="section phases" id="fases">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div class="sec-tag reveal" style="justify-content:center;">Estructura del torneo</div>
+      <div class="sec-title reveal reveal-delay-1" style="text-align:center;">Tu camino<br>al título</div>
+      <div class="sec-body reveal reveal-delay-2" style="margin:0 auto;text-align:center;">Avanza fase a fase acumulando puntos. Solo los mejores de cada ronda continúan en la competencia.</div>
+    </div>
+    <div class="phases-grid reveal reveal-delay-2">
+      <div class="phase">
+        <span class="phase-icon">⚽</span>
+        <div class="phase-name">Fase de Grupos</div>
+        <div class="phase-detail">72 partidos · 12 grupos</div>
+        <div class="phase-arrow">›</div>
+      </div>
+      <div class="phase">
+        <span class="phase-icon">⚡</span>
+        <div class="phase-name">Dieciseisavos</div>
+        <div class="phase-detail">Los mejores puntajes avanzan</div>
+        <div class="phase-arrow">›</div>
+      </div>
+      <div class="phase">
+        <span class="phase-icon">🔥</span>
+        <div class="phase-name">Cuartos de Final</div>
+        <div class="phase-detail">Solo los más precisos</div>
+        <div class="phase-arrow">›</div>
+      </div>
+      <div class="phase">
+        <span class="phase-icon">💎</span>
+        <div class="phase-name">Semifinal</div>
+        <div class="phase-detail">La élite de la quiniela</div>
+        <div class="phase-arrow">›</div>
+      </div>
+      <div class="phase">
+        <span class="phase-icon">🏆</span>
+        <div class="phase-name">Gran Final</div>
+        <div class="phase-detail">El campeón absoluto</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICE -->
+<section class="price-section" id="precio">
+  <div class="price-inner">
+    <div class="sec-tag reveal" style="justify-content:center;">Inscripción</div>
+    <div class="sec-title reveal reveal-delay-1" style="text-align:center;font-size:clamp(36px,6vw,60px);">Acceso completo<br>a todo el Mundial</div>
+
+    <div class="price-amount reveal reveal-delay-2"><sup>$</sup>499</div>
+    <div class="price-label reveal reveal-delay-2">Pesos mexicanos · Pago único</div>
+
+    <div class="limited-badge reveal reveal-delay-3">
+      <span class="limited-dot"></span>
+      Cupos limitados — No te quedes fuera
+    </div>
+
+    <div class="price-includes reveal reveal-delay-2">
+      <div class="pi-item"><span class="pi-icon">✓</span>Acceso a las 7 jornadas del Mundial</div>
+      <div class="pi-item"><span class="pi-icon">✓</span>Seguimiento de puntos en tiempo real</div>
+      <div class="pi-item"><span class="pi-icon">✓</span>Participa en todas las fases</div>
+      <div class="pi-item"><span class="pi-icon">✓</span>Compite con amigos y más jugadores</div>
+      <div class="pi-item"><span class="pi-icon">✓</span>Opción de marcador exacto (+5 pts)</div>
+      <div class="pi-item"><span class="pi-icon">✓</span>Premios garantizados en efectivo</div>
+    </div>
+
+    <div class="cta-row reveal reveal-delay-3" style="margin-bottom:0;">
+      <a href="https://chat.whatsapp.com/HNJH4lzE3q9FbA6kEMHujO?mode=gi_t" target="_blank" class="btn-wa" style="padding:18px 40px;font-size:15px;">
+        <svg class="wa-svg" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+        Unirme al grupo oficial
+      </a>
+      <a href="https://wa.me/message/RV36FDF6527YN1" target="_blank" class="btn-contact" style="padding:18px 40px;font-size:15px;">
+        <svg class="wa-svg" viewBox="0 0 24 24" fill="currentColor" style="opacity:.7"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+        Número de contacto
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- BIG CTA -->
+<section class="big-cta">
+  <div class="cta-tag">No te quedes fuera</div>
+  <div class="cta-title">Únete ahora<br>y vive el Mundial</div>
+  <p class="cta-sub">Cupos limitados. La Semana 1 ya está abierta. El fútbol más grande del mundo te espera.</p>
+  <div class="cta-btns">
+    <a href="https://chat.whatsapp.com/HNJH4lzE3q9FbA6kEMHujO?mode=gi_t" target="_blank" class="btn-dark">
+      <svg class="wa-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      Unirme al grupo oficial
+    </a>
+    <a href="https://wa.me/message/RV36FDF6527YN1" target="_blank" class="btn-dark-outline">
+      <svg class="wa-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.562 4.14 1.54 5.875L.057 23.25l5.565-1.457A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.006-1.374l-.36-.213-3.3.866.878-3.213-.233-.37A9.793 9.793 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      Número de contacto
+    </a>
+  </div>
+</section>
+
+<!-- TERMS MODAL -->
+<div class="terms-modal-overlay" id="termsModal">
+  <div class="terms-modal">
+    <div class="terms-modal-header">
+      <div class="terms-modal-title">📜 Términos y <span>Condiciones</span></div>
+      <button class="terms-modal-close" id="termsClose">✕</button>
+    </div>
+    <div class="terms-modal-body">
+      <div class="terms-modal-intro">
+        Al participar en la Quiniela Mundial 2026 organizada por GOLNER Sports, el jugador acepta íntegramente los siguientes términos y condiciones.
+      </div>
+      <div class="terms-list">
+        <div class="terms-item">
+          <div class="terms-num">01</div>
+          <div class="terms-text">La participación en la Quiniela Mundial 2026 implica la <strong>aceptación total</strong> de los presentes términos, condiciones, reglas y criterios de desempate establecidos por la organización.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">02</div>
+          <div class="terms-text">El <strong>pago de inscripción</strong> otorga el derecho a participar en la quiniela y competir por los premios anunciados oficialmente.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">03</div>
+          <div class="terms-text">Los <strong>premios serán los publicados y comunicados</strong> por la organización. La participación en la quiniela no genera derecho sobre el total de las inscripciones recaudadas.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">04</div>
+          <div class="terms-text">El monto total recaudado por concepto de inscripciones <strong>no constituye necesariamente la bolsa de premios</strong>. La organización podrá destinar parte de los ingresos a gastos operativos, administrativos, tecnológicos, promocionales y de organización.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">05</div>
+          <div class="terms-text">La organización <strong>no está obligada a revelar información financiera</strong> interna, gastos operativos, ingresos, utilidades o cualquier otro dato relacionado con la administración de la quiniela.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">06</div>
+          <div class="terms-text">Los participantes deberán <strong>registrar sus pronósticos dentro de los plazos establecidos</strong>. Una vez cerrada una jornada, no se permitirán modificaciones.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">07</div>
+          <div class="terms-text">Los <strong>resultados oficiales de los partidos</strong> serán los determinados por la FIFA y las entidades organizadoras del Mundial.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">08</div>
+          <div class="terms-text">En caso de <strong>empate en puntos</strong>, se aplicarán los criterios de desempate anunciados en las reglas oficiales de la quiniela.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">09</div>
+          <div class="terms-text">La organización podrá realizar <strong>aclaraciones o ajustes operativos</strong> a las reglas antes del inicio del torneo cuando sea necesario para el correcto funcionamiento de la competencia.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">10</div>
+          <div class="terms-text">Cualquier intento de <strong>fraude, manipulación, conducta inapropiada</strong> o incumplimiento de las reglas podrá ser motivo de descalificación sin derecho a reembolso.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">11</div>
+          <div class="terms-text">El <strong>pago de inscripción no será reembolsable</strong> una vez iniciado el torneo.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">12</div>
+          <div class="terms-text">La organización se reserva el <strong>derecho de admisión y permanencia</strong> de los participantes.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">13</div>
+          <div class="terms-text">Cualquier situación no prevista en estos términos y condiciones será resuelta por la organización, <strong>cuya decisión será definitiva</strong>.</div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-num">14</div>
+          <div class="terms-text">Al realizar el pago de inscripción y participar en la quiniela, el jugador declara haber <strong>leído, entendido y aceptado íntegramente</strong> los presentes términos y condiciones.</div>
+        </div>
+      </div>
+      <div class="terms-notice">
+        <div class="terms-notice-icon">📋</div>
+        <div class="terms-notice-text">
+          <strong>GOLNER Sports · Quiniela Mundial 2026</strong><br>
+          Estos términos y condiciones son de carácter vinculante. Para cualquier duda o aclaración, comunícate con nosotros a través del grupo oficial de WhatsApp o por mensaje directo.
+        </div>
+      </div>
+    </div>
+    <div class="terms-modal-footer">
+      <button class="terms-close-btn" id="termsCloseBtn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="f-logo"><span class="w">GOL</span><span class="g">NER</span></div>
+      <div class="f-sub">Predicciones · Rankings · Premios</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:.5rem;">
+      <a href="#" class="f-terms-link" id="termsOpen">Términos y Condiciones</a>
+    </div>
+    <div class="f-copy">
+      © 2026 GOLNER Sports<br>
+      Quiniela Mundial 2026
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){ e.target.classList.add('in'); observer.unobserve(e.target); }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Terms modal
+const modal = document.getElementById('termsModal');
+const openBtn = document.getElementById('termsOpen');
+const closeBtn = document.getElementById('termsClose');
+const closeBtnFooter = document.getElementById('termsCloseBtn');
+function openModal(e){ e.preventDefault(); modal.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ modal.classList.remove('open'); document.body.style.overflow=''; }
+openBtn.addEventListener('click', openModal);
+closeBtn.addEventListener('click', closeModal);
+closeBtnFooter.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+// Mockup interactivity
+const mockupPicks = {};
+document.getElementById('mockupBody').addEventListener('click', e => {
+  const btn = e.target.closest('.m-btn'); if(!btn) return;
+  const card = btn.closest('.m-card');
+  const id = card.dataset.mid;
+  const v = btn.dataset.v;
+  const allBtns = card.querySelectorAll('.m-btn');
+  if(btn.classList.contains('on')){
+    btn.classList.remove('on');
+    delete mockupPicks[id];
+    card.classList.remove('picked');
+  } else {
+    allBtns.forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    mockupPicks[id] = v;
+    card.classList.add('picked');
+  }
+  const n = Object.keys(mockupPicks).length;
+  document.getElementById('mProgNum').textContent = n + ' / 24';
+  document.getElementById('mProgFill').style.width = (n / 24 * 100) + '%';
+});
+</script>
+
+</body>
+</html>
