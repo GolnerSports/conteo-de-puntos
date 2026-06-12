@@ -25,6 +25,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Restore Firestore cache
+        uses: actions/cache@v4
+        with:
+          path: scripts/firestore-cache.json
+          key: firestore-cache-${{ github.run_id }}
+          restore-keys: |
+            firestore-cache-
+
       - name: Install dependencies
         run: npm install
         working-directory: scripts

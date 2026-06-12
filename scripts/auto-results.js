@@ -3,9 +3,13 @@
  * Usa Firebase Admin SDK para acceso completo a Firestore.
  * Consulta ESPN cada 5 min, detecta partidos terminados,
  * actualiza resultados, recalcula puntos y envía notificaciones.
+ *
+ * Caché local (scripts/firestore-cache.json) para reducir lecturas de Firestore.
  */
 
 const https = require("https");
+const fs    = require("fs");
+const path  = require("path");
 
 // Firebase Admin SDK
 const admin = require("firebase-admin");
@@ -27,6 +31,46 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+// ── CACHÉ LOCAL ───────────────────────────────────────────────────────────────
+const CACHE_FILE = path.join(__dirname, "firestore-cache.json");
+const CACHE_TTL  = 30 * 60 * 1000; // 30 minutos
+
+function loadCache() {
+  try {
+    if (!fs.existsSync(CACHE_FILE)) return null;
+    const raw = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+    const age = Date.now() - (raw.savedAt || 0);
+    if (age > CACHE_TTL) {
+      console.log(`⏰ Caché expirado (${Math.round(age/60000)} min). Recargando Firestore.`);
+      return null;
+    }
+    console.log(`💾 Usando caché local (${Math.round(age/60000)} min de antigüedad)`);
+    return raw;
+  } catch(e) {
+    return null;
+  }
+}
+
+function saveCache(data) {
+  try {
+    fs.writeFileSync(CACHE_FILE, JSON.stringify({ ...data, savedAt: Date.now() }, null, 2));
+    console.log(`💾 Caché guardado`);
+  } catch(e) {
+    console.log(`⚠️ No se pudo guardar caché: ${e.message}`);
+  }
+}
+
+function invalidateCache() {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const raw = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+      // Marcar como expirado
+      raw.savedAt = 0;
+      fs.writeFileSync(CACHE_FILE, JSON.stringify(raw, null, 2));
+    }
+  } catch(e) {}
+}
 
 // ── ESPN TEAM NAME MAP ────────────────────────────────────────────────────────
 const ESPN_NAME_MAP = {
@@ -149,7 +193,7 @@ async function sendPushToAll(title, body) {
       sent++;
     } catch(e) {
       if (e.code === "messaging/registration-token-not-registered") {
-        // Token inválido — se puede borrar de Firestore
+        // Token inválido
       }
     }
   }
@@ -162,11 +206,12 @@ async function withRetry(fn, retries = 3, delayMs = 5000) {
     try {
       return await fn();
     } catch(e) {
-      const isQuota = e.code === 8 || (e.message || "").includes("RESOURCE_EXHAUSTED") || (e.message || "").includes("Quota");
-      const isRetryable = isQuota || e.code === 14; // 14 = UNAVAILABLE
+      const isRetryable = e.code === 8 || e.code === 14 ||
+        (e.message || "").includes("RESOURCE_EXHAUSTED") ||
+        (e.message || "").includes("UNAVAILABLE");
       if (isRetryable && attempt < retries) {
         const wait = delayMs * attempt;
-        console.log(`⏳ Intento ${attempt}/${retries} fallido (${e.message}). Reintentando en ${wait/1000}s...`);
+        console.log(`⏳ Intento ${attempt}/${retries} fallido. Reintentando en ${wait/1000}s...`);
         await new Promise(r => setTimeout(r, wait));
       } else {
         throw e;
@@ -186,18 +231,30 @@ async function main() {
 
   if (!finished.length) { console.log("Sin partidos terminados. Fin."); return; }
 
-  // 2. Cargar todos los partidos de Firestore
-  const matchesSnap = await withRetry(() =>
-    db.collection("matches").get()
-  );
-  const allMatches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const pendingMatches = allMatches.filter(m => !(m.played && m.finalized));
-  console.log(`📋 Partidos en Firestore: ${allMatches.length} (${pendingMatches.length} pendientes)`);
+  // 2. Cargar datos de Firestore (con caché para ahorrar lecturas)
+  let cache = loadCache();
+  let allMatches, allParticipants;
 
-  // 3. Verificar si hay algo nuevo que procesar
+  if (cache) {
+    allMatches      = cache.matches      || [];
+    allParticipants = cache.participants || [];
+  } else {
+    console.log("📥 Cargando datos de Firestore...");
+    const [matchesSnap, participantsSnap] = await Promise.all([
+      withRetry(() => db.collection("matches").get()),
+      withRetry(() => db.collection("participants").get()),
+    ]);
+    allMatches      = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allParticipants = participantsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    saveCache({ matches: allMatches, participants: allParticipants });
+  }
+
+  console.log(`📋 Partidos: ${allMatches.length} | 👥 Participantes: ${allParticipants.length}`);
+
+  // 3. Verificar si hay partidos nuevos por procesar
   const newlyFinished = finished.filter(espn => {
     const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
-    const fsMatch = pendingMatches.find(m =>
+    const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
       buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
     );
@@ -205,18 +262,13 @@ async function main() {
   });
 
   if (!newlyFinished.length) {
-    console.log("Todos los partidos terminados ya están finalizados. Fin.");
+    console.log("✅ Todos los partidos terminados ya están finalizados.");
     return;
   }
 
-  // 4. Cargar todos los participantes (solo si hay partidos nuevos)
-  const participantsSnap = await withRetry(() =>
-    db.collection("participants").get()
-  );
-  const allParticipants = participantsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  console.log(`👥 Participantes: ${allParticipants.length}`);
+  console.log(`🆕 ${newlyFinished.length} partido(s) nuevos para procesar`);
 
-  // 5. Construir mapa de resultados actuales
+  // 4. Construir mapa de resultados actuales
   const allResults = {};
   for (const m of allMatches) {
     if (m.played && m.matchKey) {
@@ -229,13 +281,13 @@ async function main() {
     }
   }
 
-  // 6. Procesar cada partido terminado
+  // 5. Procesar cada partido terminado
+  let anyUpdated = false;
   for (const espn of finished) {
     const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
     console.log(`\n🔍 ${espn.homeTeam} ${espn.homeScore}-${espn.awayScore} ${espn.awayTeam}`);
     console.log(`   matchKey: ${matchKey}`);
 
-    // Buscar en Firestore (primero en pendientes, luego en todos)
     const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
       buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
@@ -243,7 +295,7 @@ async function main() {
 
     if (!fsMatch) {
       console.log(`  ⚠️  No encontrado en Firestore.`);
-      console.log(`  Partidos pendientes: ${pendingMatches.map(m => buildMatchKey(m.homeTeam, m.awayTeam)).join(", ")}`);
+      console.log(`  Partidos disponibles: ${allMatches.map(m => buildMatchKey(m.homeTeam, m.awayTeam)).join(", ")}`);
       continue;
     }
 
@@ -254,7 +306,7 @@ async function main() {
 
     const result = espn.homeScore > espn.awayScore ? "home" : espn.awayScore > espn.homeScore ? "away" : "draw";
 
-    // Actualizar partido
+    // Actualizar partido en Firestore
     await withRetry(() =>
       db.collection("matches").doc(fsMatch.id).update({
         live: false, played: true, finalized: true,
@@ -263,6 +315,14 @@ async function main() {
       })
     );
     console.log(`  ✅ Partido actualizado`);
+    anyUpdated = true;
+
+    // Actualizar en memoria para cálculos
+    fsMatch.played    = true;
+    fsMatch.finalized = true;
+    fsMatch.result    = result;
+    fsMatch.homeScore = espn.homeScore;
+    fsMatch.awayScore = espn.awayScore;
 
     // Agregar al mapa de resultados
     allResults[matchKey] = {
@@ -274,19 +334,16 @@ async function main() {
 
     // Recalcular puntos de todos los participantes
     const batch = db.batch();
-    let updated = 0;
     for (const p of allParticipants) {
       const preds = Object.values(p.predictions || {});
       const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
-      // Actualizar siempre para asegurar consistencia
       batch.update(db.collection("participants").doc(p.id), {
         totalPoints, weekPoints, phasePoints, matchBreakdown,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
-      updated++;
     }
     await withRetry(() => batch.commit());
-    console.log(`  👥 ${updated} participantes actualizados`);
+    console.log(`  👥 ${allParticipants.length} participantes actualizados`);
 
     // Notificación push
     const winner = result === "draw" ? "Empate" : result === "home" ? `Gana ${fsMatch.homeTeam}` : `Gana ${fsMatch.awayTeam}`;
@@ -295,6 +352,9 @@ async function main() {
       `${winner} · ¡Puntos actualizados! 🏆`
     );
   }
+
+  // Invalidar caché para que el próximo run lea datos frescos
+  if (anyUpdated) invalidateCache();
 
   console.log("\n🏁 Finalizado.");
 }
