@@ -246,8 +246,30 @@ async function fetchESPNMatches() {
 
 // ── SCORING ───────────────────────────────────────────────────────────────────
 
+const ESPN_NAME_MAP = {
+  "south korea": "corea del sur", "korea republic": "corea del sur",
+  "czechia": "chequia", "czech republic": "chequia",
+  "united states": "estados unidos", "usa": "estados unidos",
+  "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil",
+  "saudi arabia": "arabia saudita",
+  "south africa": "sudafrica",
+  "congo dr": "congo dr", "dr congo": "congo dr", "democratic republic of congo": "congo dr",
+  "new zealand": "nueva zelanda",
+  "bosnia-herzegovina": "bosnia", "bosnia and herzegovina": "bosnia",
+  "turkiye": "turquia", "turkey": "turquia",
+  "netherlands": "paises bajos", "holland": "paises bajos",
+  "algeria": "argelia", "germany": "alemania", "belgium": "belgica",
+  "switzerland": "suiza", "sweden": "suecia", "norway": "noruega",
+  "morocco": "marruecos", "egypt": "egipto", "tunisia": "tunez",
+  "cape verde": "cabo verde", "uzbekistan": "uzbekistan",
+  "curacao": "curazao", "jordan": "jordania", "scotland": "escocia",
+  "england": "inglaterra", "haiti": "haiti", "iran": "iran",
+  "iraq": "irak", "austria": "austria", "qatar": "catar",
+};
+
 function normalize(s) {
-  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const clean = (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  return ESPN_NAME_MAP[clean] || clean;
 }
 
 function buildMatchKey(home, away) {
