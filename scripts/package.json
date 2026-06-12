@@ -1,0 +1,9 @@
+{
+  "name": "golner-auto-results",
+  "version": "1.0.0",
+  "description": "GOLNER SPORTS — Auto Results Script",
+  "main": "auto-results.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
