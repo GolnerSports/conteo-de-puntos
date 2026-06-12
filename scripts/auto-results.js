@@ -360,6 +360,13 @@ async function main() {
 }
 
 main().catch(err => {
+  const isQuota = err.code === 8 || (err.message || "").includes("RESOURCE_EXHAUSTED") || (err.message || "").includes("Quota");
+  if (isQuota) {
+    // Cuota agotada — salir sin error para no recibir emails de falla
+    // La cuota se resetea a medianoche hora del Pacífico (~2am México)
+    console.log("⏸️  Cuota de Firestore agotada por hoy. Se reintentará en el siguiente ciclo.");
+    process.exit(0);
+  }
   console.error("❌ Error:", err.message);
   process.exit(1);
 });
