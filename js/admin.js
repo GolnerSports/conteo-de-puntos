@@ -259,15 +259,29 @@ document.getElementById("parseBtn").addEventListener("click", () => {
         <i class="fa-solid fa-user-plus"></i> Participante nuevo — se registrará por primera vez
        </div>`;
 
+  // Alias explícitos: nombre abreviado del parser → nombre real en Firestore
+  const TEAM_ALIASES = {
+    "rep checa":          "republica checa",
+    "rep. checa":         "republica checa",
+    "bosnia herz":        "bosnia herzegovina",
+    "bosnia herz.":       "bosnia herzegovina",
+    "rd congo":           "republica democratica del congo",
+    "r.d. congo":         "republica democratica del congo",
+    "ee.uu.":             "estados unidos",
+    "ee uu":              "estados unidos",
+    "usa":                "estados unidos",
+    "corea sur":          "corea del sur",
+    "corea norte":        "corea del norte",
+    "arabia saudita":     "arabia saudi",
+    "n. zelanda":         "nueva zelanda",
+    "n zelanda":          "nueva zelanda",
+    "nueva zelanda":      "nueva zelanda",
+    "irlanda norte":      "irlanda del norte",
+  };
   // Helper: normaliza texto quitando acentos, puntos y minúsculas
-  const normTeam = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
-  // Compara dos nombres de equipo con tolerancia a abreviaciones palabra-por-palabra
-  // ej. "Rep Checa" vs "Republica Checa" → "rep" es prefijo de "republica" ✓
-  const teamsMatch = (a, b) => {
-    const wa = normTeam(a).split(/\s+/);
-    const wb = normTeam(b).split(/\s+/);
-    if (wa.length !== wb.length) return false;
-    return wa.every((w, i) => wb[i].startsWith(w) || w.startsWith(wb[i]));
+  const normTeam = t => {
+    const s = (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
+    return TEAM_ALIASES[s] || s;
   };
   // Fuzzy: busca partido en Firestore aunque el nombre venga abreviado
   const fuzzyFindMatch = (pred) => {
@@ -279,10 +293,10 @@ document.getElementById("parseBtn").addEventListener("click", () => {
       (m.homeTeam + "_vs_" + m.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_") === pred.matchKey
     );
     if (m) return m;
-    // 3. Fuzzy palabra-por-palabra (maneja abreviaciones como "Rep. Checa", "Bosnia Herz.")
-    return allMatches.find(m =>
-      teamsMatch(pred.homeTeam, m.homeTeam) && teamsMatch(pred.awayTeam, m.awayTeam)
-    ) || null;
+    // 3. Por alias: compara nombres normalizados (con alias aplicado)
+    const pH = normTeam(pred.homeTeam);
+    const pA = normTeam(pred.awayTeam);
+    return allMatches.find(m => normTeam(m.homeTeam) === pH && normTeam(m.awayTeam) === pA) || null;
   };
 
   // Agrupar predicciones por semana para el preview
@@ -385,20 +399,15 @@ async function saveParticipant(parsed) {
     matchByKey[normKey] = m;
   }
 
-  // Helper fuzzy para save (misma lógica que preview)
-  const normTeamSave = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
-  const teamsMatchSave = (a, b) => {
-    const wa = normTeamSave(a).split(/\s+/);
-    const wb = normTeamSave(b).split(/\s+/);
-    if (wa.length !== wb.length) return false;
-    return wa.every((w, i) => wb[i].startsWith(w) || w.startsWith(wb[i]));
-  };
+  // Helper fuzzy para save — reutiliza TEAM_ALIASES y normTeam definidos arriba
   const fuzzyFindSave = (pred) => {
     let m = matchByKey[pred.matchKey];
     if (m) return m;
     m = matchByKey[(pred.homeTeam + "_vs_" + pred.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_")];
     if (m) return m;
-    return allMatches.find(x => teamsMatchSave(pred.homeTeam, x.homeTeam) && teamsMatchSave(pred.awayTeam, x.awayTeam)) || null;
+    const pH = normTeam(pred.homeTeam);
+    const pA = normTeam(pred.awayTeam);
+    return allMatches.find(x => normTeam(x.homeTeam) === pH && normTeam(x.awayTeam) === pA) || null;
   };
 
   // Construir mapa de predicciones: matchKey → pred object
