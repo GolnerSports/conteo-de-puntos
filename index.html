@@ -204,7 +204,14 @@
 
     // Participants (sin orderBy para incluir los que no tienen totalPoints aún)
     onSnapshot(collection(db, "participants"), snap => {
-      allParticipants = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
+      const raw = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
+      // Ordenar por puntos y asignar rank client-side
+      raw.sort((a, b) => {
+        const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
+        if (ptsDiff !== 0) return ptsDiff;
+        return (b.exactScores || 0) - (a.exactScores || 0);
+      });
+      allParticipants = raw.map((p, i) => ({ ...p, rank: i + 1 }));
       updateStatsBar();
       renderLeaderboard();
     });

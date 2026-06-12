@@ -209,7 +209,13 @@ onSnapshot(doc(db, "config", "tournament"), snap => {
 onSnapshot(
   collection(db, "participants"),
   snap => {
-    allParticipants = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
+    const raw = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
+    raw.sort((a, b) => {
+      const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
+      if (ptsDiff !== 0) return ptsDiff;
+      return (b.exactScores || 0) - (a.exactScores || 0);
+    });
+    allParticipants = raw.map((p, i) => ({ ...p, rank: i + 1 }));
     renderParticipantsTable();
     updateCutPreview();
   }
