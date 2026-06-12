@@ -386,15 +386,21 @@
       }
     });
 
+    // Cuántos están EN RIESGO según la fase
+    const PHASE_RISK_MAP = { groups: 10, round_of_16: 10, round_of_8: 10, quarter_final: 15, semi_final: 10, final: 0 };
+
     // ── RENDER LEADERBOARD ───────────────────────────────────────
     function renderLeaderboard() {
       const body    = document.getElementById("leaderboardBody");
       const cutLine = document.getElementById("cutLine");
       const search  = (document.getElementById("searchInput").value || "").toLowerCase();
 
-      const total    = allParticipants.length;
-      const cutRank  = Math.ceil(total * (tournamentConfig.cutoffPct || 0.4));
-      const riskZone = Math.ceil(cutRank * 1.15);
+      const total       = allParticipants.length;
+      const cutRank     = Math.ceil(total * (tournamentConfig.cutoffPct || 0.4));
+      const atRiskCount = PHASE_RISK_MAP[tournamentConfig.phase || "groups"] || 0;
+      const activeCount = allParticipants.filter(p => p.status !== "eliminated").length;
+      // riskZone = el rank a partir del cual empieza EN RIESGO (los últimos atRiskCount)
+      const riskZone    = activeCount - atRiskCount;
 
       const medals = ["🥇","🥈","🥉"];
 
@@ -403,7 +409,7 @@
         const matchFilter =
           currentFilter === "all"        ? true :
           currentFilter === "classified" ? p.rank <= cutRank :
-          currentFilter === "risk"       ? (p.rank > cutRank && p.rank <= riskZone) :
+          currentFilter === "risk"       ? (p.rank > riskZone && riskZone > 0) :
           currentFilter === "eliminated" ? p.status === "eliminated" : true;
         return matchSearch && matchFilter;
       });
@@ -475,22 +481,20 @@
     }
 
     function getStatusInfo(p, cutRank, riskZone) {
-      const inGroups = (tournamentConfig.phase || "groups") === "groups";
-
-      // Eliminado manual siempre se respeta (lo marcó el admin explícitamente)
-      if (p.status === "eliminated" && !inGroups)
+      // Eliminado manual siempre se respeta
+      if (p.status === "eliminated")
         return { cls: "row-eliminated", badge: "eliminated", label: "Eliminado" };
 
-      // Durante fase de grupos: nadie es Clasificado ni Eliminado todavía
-      if (inGroups) {
-        if (p.rank <= riskZone) return { cls: "", badge: "active", label: "Activo" };
+      // EN RIESGO = últimos atRiskCount por puntos (rank > riskZone)
+      if (p.rank > riskZone && riskZone > 0)
         return { cls: "row-risk", badge: "risk", label: "En riesgo" };
-      }
 
-      // Fases eliminatorias
-      if (p.rank <= cutRank)  return { cls: "row-classified", badge: "classified", label: "Clasificado" };
-      if (p.rank <= riskZone) return { cls: "row-risk",       badge: "risk",       label: "En riesgo" };
-      return { cls: "row-eliminated", badge: "eliminated", label: "Eliminado" };
+      // Clasificado (solo en fases eliminatorias)
+      const inGroups = (tournamentConfig.phase || "groups") === "groups";
+      if (!inGroups && p.rank <= cutRank)
+        return { cls: "row-classified", badge: "classified", label: "Clasificado" };
+
+      return { cls: "", badge: "active", label: "Activo" };
     }
 
     // ── RENDER RESULTS VIEW (agrupado por semana/fase) ──────────
