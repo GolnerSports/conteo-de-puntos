@@ -105,6 +105,43 @@ document.getElementById("logoutBtn").addEventListener("click", () =>
 // ── STATE ───────────────────────────────────────────────────────
 let allParticipants  = [];
 let allMatches       = [];
+
+// ── TEAM NAME NORMALIZATION (usado en import preview y save) ────
+const TEAM_ALIASES = {
+  "rep checa":      "republica checa",
+  "rep. checa":     "republica checa",
+  "bosnia herz":    "bosnia herzegovina",
+  "bosnia herz.":   "bosnia herzegovina",
+  "rd congo":       "republica democratica del congo",
+  "r.d. congo":     "republica democratica del congo",
+  "ee.uu.":         "estados unidos",
+  "ee uu":          "estados unidos",
+  "usa":            "estados unidos",
+  "corea sur":      "corea del sur",
+  "corea norte":    "corea del norte",
+  "arabia saudita": "arabia saudi",
+  "n. zelanda":     "nueva zelanda",
+  "n zelanda":      "nueva zelanda",
+  "irlanda norte":  "irlanda del norte",
+};
+const normTeam = t => {
+  const s = (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
+  return TEAM_ALIASES[s] || s;
+};
+const fuzzyFindInMatches = (pred, matches) => {
+  // 1. Exacto
+  let m = matches.find(m => m.matchKey === pred.matchKey);
+  if (m) return m;
+  // 2. matchKey normalizado desde homeTeam/awayTeam de Firestore
+  m = matches.find(m =>
+    (m.homeTeam + "_vs_" + m.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_") === pred.matchKey
+  );
+  if (m) return m;
+  // 3. Por alias de nombre de equipo
+  const pH = normTeam(pred.homeTeam);
+  const pA = normTeam(pred.awayTeam);
+  return matches.find(m => normTeam(m.homeTeam) === pH && normTeam(m.awayTeam) === pA) || null;
+};
 let allResults       = {};   // matchKey → result object
 let tournamentConfig = { phase: "groups", week: 1, cutoffPct: 0.4 };
 
@@ -259,50 +296,11 @@ document.getElementById("parseBtn").addEventListener("click", () => {
         <i class="fa-solid fa-user-plus"></i> Participante nuevo — se registrará por primera vez
        </div>`;
 
-  // Alias explícitos: nombre abreviado del parser → nombre real en Firestore
-  const TEAM_ALIASES = {
-    "rep checa":          "republica checa",
-    "rep. checa":         "republica checa",
-    "bosnia herz":        "bosnia herzegovina",
-    "bosnia herz.":       "bosnia herzegovina",
-    "rd congo":           "republica democratica del congo",
-    "r.d. congo":         "republica democratica del congo",
-    "ee.uu.":             "estados unidos",
-    "ee uu":              "estados unidos",
-    "usa":                "estados unidos",
-    "corea sur":          "corea del sur",
-    "corea norte":        "corea del norte",
-    "arabia saudita":     "arabia saudi",
-    "n. zelanda":         "nueva zelanda",
-    "n zelanda":          "nueva zelanda",
-    "nueva zelanda":      "nueva zelanda",
-    "irlanda norte":      "irlanda del norte",
-  };
-  // Helper: normaliza texto quitando acentos, puntos y minúsculas
-  const normTeam = t => {
-    const s = (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
-    return TEAM_ALIASES[s] || s;
-  };
-  // Fuzzy: busca partido en Firestore aunque el nombre venga abreviado
-  const fuzzyFindMatch = (pred) => {
-    // 1. Coincidencia exacta de matchKey
-    let m = allMatches.find(m => m.matchKey === pred.matchKey);
-    if (m) return m;
-    // 2. matchKey normalizado de los equipos del partido en FS
-    m = allMatches.find(m =>
-      (m.homeTeam + "_vs_" + m.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_") === pred.matchKey
-    );
-    if (m) return m;
-    // 3. Por alias: compara nombres normalizados (con alias aplicado)
-    const pH = normTeam(pred.homeTeam);
-    const pA = normTeam(pred.awayTeam);
-    return allMatches.find(m => normTeam(m.homeTeam) === pH && normTeam(m.awayTeam) === pA) || null;
-  };
 
   // Agrupar predicciones por semana para el preview
   const previewGroups = {};
   for (const pred of parsedData.predictions) {
-    const fsMatch = fuzzyFindMatch(pred);
+    const fsMatch = fuzzyFindInMatches(pred, allMatches);
     const week = fsMatch?.week || "?";
     const label = fsMatch ? `Semana ${week}` : "Sin asignar";
     if (!previewGroups[label]) previewGroups[label] = [];
@@ -399,21 +397,11 @@ async function saveParticipant(parsed) {
     matchByKey[normKey] = m;
   }
 
-  // Helper fuzzy para save — reutiliza TEAM_ALIASES y normTeam definidos arriba
-  const fuzzyFindSave = (pred) => {
-    let m = matchByKey[pred.matchKey];
-    if (m) return m;
-    m = matchByKey[(pred.homeTeam + "_vs_" + pred.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_")];
-    if (m) return m;
-    const pH = normTeam(pred.homeTeam);
-    const pA = normTeam(pred.awayTeam);
-    return allMatches.find(x => normTeam(x.homeTeam) === pH && normTeam(x.awayTeam) === pA) || null;
-  };
 
   // Construir mapa de predicciones: matchKey → pred object
   const predictionsMap = {};
   for (const pred of parsed.predictions) {
-    const fsMatch = fuzzyFindSave(pred);
+    const fsMatch = fuzzyFindInMatches(pred, allMatches);
     predictionsMap[pred.matchKey] = {
       matchKey:   pred.matchKey,
       homeTeam:   pred.homeTeam,
