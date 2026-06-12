@@ -1488,6 +1488,13 @@ window.openParticipantDrawer = (id) => {
   for (const section of sortedKeys) {
     html += `<div class="drawer-section-title">${section}</div>`;
 
+    // Ordenar por fecha del partido
+    groups[section].sort((a, b) => {
+      const da = matchByKey[a.matchKey]?.date || a.date || "";
+      const db = matchByKey[b.matchKey]?.date || b.date || "";
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+
     for (const m of groups[section]) {
       if (m.isPending) {
         // Partido sin resultado aún
