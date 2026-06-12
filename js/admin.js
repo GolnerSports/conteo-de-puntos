@@ -365,6 +365,32 @@ function renderParticipantsTable() {
   const tbody  = document.getElementById("adminParticipantsBody");
   const search = (document.getElementById("adminSearch").value || "").toLowerCase();
 
+  if (!allParticipants.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:rgba(255,255,255,0.4)">Sin participantes aún</td></tr>`;
+    return;
+  }
+
+  // 1. Ordenar todos por puntos para asignar ranking y calcular EN RIESGO
+  const byPoints = allParticipants.slice().sort((a, b) => {
+    const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
+    if (ptsDiff !== 0) return ptsDiff;
+    const exactDiff = (b.exactScores || 0) - (a.exactScores || 0);
+    if (exactDiff !== 0) return exactDiff;
+    return (b.correctResults || 0) - (a.correctResults || 0);
+  });
+
+  // 2. Asignar rank a cada participante
+  const rankMap = {};
+  byPoints.forEach((p, i) => { rankMap[p.id] = i + 1; });
+
+  // 3. Calcular EN RIESGO: últimos atRiskCount de los no-eliminados
+  const atRiskCount = getAtRiskCount();
+  const activeByPoints = byPoints.filter(p => p.status !== "eliminated");
+  const atRiskIds = new Set(
+    activeByPoints.slice(Math.max(0, activeByPoints.length - atRiskCount)).map(p => p.id)
+  );
+
+  // 4. Filtrar y ordenar para mostrar (por golnerId o búsqueda)
   const filtered = allParticipants
     .filter(p => !search || (p.name || "").toLowerCase().includes(search))
     .slice()
@@ -379,25 +405,8 @@ function renderParticipantsTable() {
     return;
   }
 
-  // Calcular quién está EN RIESGO según ranking y fase actual
-  const atRiskCount = getAtRiskCount();
-  const activeSorted = allParticipants
-    .filter(p => p.status !== "eliminated")
-    .slice()
-    .sort((a, b) => {
-      const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
-      if (ptsDiff !== 0) return ptsDiff;
-      // Desempate por marcadores exactos luego resultados correctos
-      const exactDiff = (b.exactScores || 0) - (a.exactScores || 0);
-      if (exactDiff !== 0) return exactDiff;
-      return (b.correctResults || 0) - (a.correctResults || 0);
-    });
-  // Solo los últimos atRiskCount están EN RIESGO (por índice, no por puntos)
-  const atRiskIds = new Set(
-    activeSorted.slice(Math.max(0, activeSorted.length - atRiskCount)).map(p => p.id)
-  );
-
   tbody.innerHTML = filtered.map(p => {
+    const rank = rankMap[p.id] || "—";
     const w1 = (p.weekPoints && p.weekPoints[1]) || 0;
     const w2 = (p.weekPoints && p.weekPoints[2]) || 0;
     const w3 = (p.weekPoints && p.weekPoints[3]) || 0;
@@ -409,7 +418,7 @@ function renderParticipantsTable() {
 
     return `
       <tr>
-        <td><span style="color:rgba(255,255,255,0.4);font-family:var(--font-display);font-weight:700">${p.rank}</span></td>
+        <td><span style="color:rgba(255,255,255,0.4);font-family:var(--font-display);font-weight:700">${rank}</span></td>
         <td><span style="font-size:12px;font-family:var(--font-display);color:var(--green);font-weight:700">${esc(p.golnerId || "—")}</span></td>
         <td><strong>${esc(p.name)}</strong></td>
         <td style="color:rgba(255,255,255,0.6)">${predCount}</td>
