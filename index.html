@@ -210,6 +210,75 @@
       renderLeaderboard();
     });
 
+    // ── ESPN LIVE SCORES ─────────────────────────────────────────
+    let espnLiveScores = {}; // matchKey → { homeScore, awayScore, status, clock }
+    let espnPollInterval = null;
+
+    function normalizeTeam(s) {
+      return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+    }
+    function buildMatchKeyLocal(home, away) {
+      return normalizeTeam(home) + "_vs_" + normalizeTeam(away);
+    }
+
+    async function fetchESPNLive() {
+      try {
+        // Hora México (UTC-6)
+        const now  = new Date(Date.now() - 6 * 60 * 60 * 1000);
+        const yyyy = now.getUTCFullYear();
+        const mm   = String(now.getUTCMonth() + 1).padStart(2, "0");
+        const dd   = String(now.getUTCDate()).padStart(2, "0");
+        const url  = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        const events = data.events || [];
+
+        let hasLive = false;
+        const newScores = {};
+
+        for (const ev of events) {
+          const comp  = ev.competitions?.[0];
+          const home  = comp?.competitors?.find(c => c.homeAway === "home");
+          const away  = comp?.competitors?.find(c => c.homeAway === "away");
+          const state = comp?.status?.type?.state; // "pre" | "in" | "post"
+          const completed = comp?.status?.type?.completed;
+          const key = buildMatchKeyLocal(home?.team?.displayName || "", away?.team?.displayName || "");
+
+          newScores[key] = {
+            homeScore: parseInt(home?.score || "0"),
+            awayScore: parseInt(away?.score || "0"),
+            status: state,
+            completed,
+            clock: comp?.status?.displayClock || "",
+            homeTeam: home?.team?.displayName || "",
+            awayTeam: away?.team?.displayName || ""
+          };
+
+          if (state === "in") hasLive = true;
+        }
+
+        espnLiveScores = newScores;
+        renderResultsView();
+
+        // Si no hay partidos en curso, pausar polling y reanudar en 5 min
+        if (!hasLive && espnPollInterval) {
+          clearInterval(espnPollInterval);
+          espnPollInterval = null;
+          setTimeout(startESPNPoll, 5 * 60 * 1000);
+        }
+      } catch(e) {
+        // Silencioso — no romper la app si ESPN falla
+      }
+    }
+
+    function startESPNPoll() {
+      fetchESPNLive();
+      if (espnPollInterval) clearInterval(espnPollInterval);
+      espnPollInterval = setInterval(fetchESPNLive, 60 * 1000); // cada 60 segundos
+    }
+
+    startESPNPoll();
+
     // All matches (for results view)
     let allMatchesData = [];
     onSnapshot(query(collection(db, "matches"), orderBy("date", "asc")), snap => {
@@ -343,7 +412,16 @@
       const container = document.getElementById("resultsGrouped");
       if (!container) return;
 
-      const liveMatches  = allMatchesData.filter(m => m.live && !m.played);
+      // Enriquecer con datos ESPN en vivo
+      const espnLive = Object.values(espnLiveScores).filter(e => e.status === "in");
+      const liveMatches  = allMatchesData.filter(m => m.live && !m.played).map(m => {
+        const key = buildMatchKeyLocal(m.homeTeam, m.awayTeam);
+        const espn = espnLiveScores[key];
+        if (espn) {
+          return { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock };
+        }
+        return m;
+      });
       const played       = allMatchesData.filter(m => m.played);
 
       if (!liveMatches.length && !played.length) {
@@ -370,7 +448,8 @@
                   <span class="result-team-name">${escHtml(m.homeTeam)}</span>
                 </div>
                 <div style="text-align:center;flex-shrink:0">
-                  <div class="result-score" style="color:#39ff14">${m.liveHomeScore} - ${m.liveAwayScore}</div>
+                  <div class="result-score" style="color:#39ff14">${m.liveHomeScore ?? 0} - ${m.liveAwayScore ?? 0}</div>
+                  ${m.espnClock ? `<div style="font-size:11px;color:#ef4444;font-weight:700">${m.espnClock}'</div>` : ""}
                 </div>
                 <div class="result-team away-team">
                   <span class="result-team-name">${escHtml(m.awayTeam)}</span>
