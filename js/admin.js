@@ -1465,7 +1465,7 @@ window.openParticipantDrawer = (id) => {
   // Pending predictions — cross-reference allMatches for week/phase
   for (const [matchKey, pred] of Object.entries(p.predictions || {})) {
     if (playedKeys.has(matchKey)) continue;
-    const match = matchByKey[matchKey];
+    const match = matchByKey[matchKey] || fuzzyFindInMatches({ ...pred, matchKey }, allMatches);
     // Usar week/phase del partido en Firestore, o del campo guardado en la predicción
     const phase = match?.phase || pred.phase || "groups";
     const week  = match?.week  || pred.week  || 1;
@@ -1489,9 +1489,12 @@ window.openParticipantDrawer = (id) => {
     html += `<div class="drawer-section-title">${section}</div>`;
 
     // Ordenar por fecha del partido
+    const getDate = m => {
+      const found = matchByKey[m.matchKey] || fuzzyFindInMatches(m, allMatches);
+      return found?.date || m.date || "";
+    };
     groups[section].sort((a, b) => {
-      const da = matchByKey[a.matchKey]?.date || a.date || "";
-      const db = matchByKey[b.matchKey]?.date || b.date || "";
+      const da = getDate(a), db = getDate(b);
       return da < db ? -1 : da > db ? 1 : 0;
     });
 
