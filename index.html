@@ -812,22 +812,9 @@
       navigator.serviceWorker.register('/firebase-messaging-sw.js');
     }
 
-    // Registrar SW principal y forzar actualización automática
+    // Registrar SW principal
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        // Verificar si hay actualización disponible
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              // Recargar para aplicar nueva versión
-              window.location.reload();
-            }
-          });
-        });
-        // Forzar verificación de actualización cada vez que se abre
-        reg.update();
-      });
+      navigator.serviceWorker.register('/sw.js');
     }
 
     // Mostrar banner si aún no ha decidido
