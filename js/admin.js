@@ -379,12 +379,25 @@ function renderParticipantsTable() {
     return;
   }
 
+  // Calcular quién está EN RIESGO según ranking y fase actual
+  const atRiskCount = getAtRiskCount();
+  const activeSorted = allParticipants
+    .filter(p => p.status !== "eliminated")
+    .slice()
+    .sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+  const atRiskIds = new Set(
+    activeSorted.slice(activeSorted.length - atRiskCount).map(p => p.id)
+  );
+
   tbody.innerHTML = filtered.map(p => {
     const w1 = (p.weekPoints && p.weekPoints[1]) || 0;
     const w2 = (p.weekPoints && p.weekPoints[2]) || 0;
     const w3 = (p.weekPoints && p.weekPoints[3]) || 0;
     const predCount = Object.keys(p.predictions || {}).length;
-    const statusBadge = `<span class="badge badge-${statusClass(p.status)}">${statusLabel(p.status)}</span>`;
+    const effectiveStatus = p.status === "eliminated" ? "eliminated"
+      : atRiskIds.has(p.id) ? "at_risk"
+      : "active";
+    const statusBadge = `<span class="badge badge-${statusClass(effectiveStatus)}">${statusLabel(effectiveStatus)}</span>`;
 
     return `
       <tr>
@@ -414,6 +427,20 @@ function renderParticipantsTable() {
       </tr>
     `;
   }).join("");
+}
+
+// Cuántos están EN RIESGO según la fase actual
+const PHASE_RISK = {
+  groups:        10,
+  round_of_16:   10,
+  round_of_8:    10,
+  quarter_final: 15,
+  semi_final:    10,
+  final:          0,
+};
+
+function getAtRiskCount() {
+  return PHASE_RISK[tournamentConfig.phase] || 0;
 }
 
 function statusClass(s) {
