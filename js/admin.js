@@ -259,9 +259,17 @@ document.getElementById("parseBtn").addEventListener("click", () => {
         <i class="fa-solid fa-user-plus"></i> Participante nuevo — se registrará por primera vez
        </div>`;
 
-  // Helper: normaliza un nombre de equipo quitando acentos, puntos y minúsculas
-  const normTeam = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\./g,"").toLowerCase().trim();
-  // Fuzzy: busca partido en Firestore aunque el nombre venga abreviado (ej. "Rep. Checa" → "Republica Checa")
+  // Helper: normaliza texto quitando acentos, puntos y minúsculas
+  const normTeam = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
+  // Compara dos nombres de equipo con tolerancia a abreviaciones palabra-por-palabra
+  // ej. "Rep Checa" vs "Republica Checa" → "rep" es prefijo de "republica" ✓
+  const teamsMatch = (a, b) => {
+    const wa = normTeam(a).split(/\s+/);
+    const wb = normTeam(b).split(/\s+/);
+    if (wa.length !== wb.length) return false;
+    return wa.every((w, i) => wb[i].startsWith(w) || w.startsWith(wb[i]));
+  };
+  // Fuzzy: busca partido en Firestore aunque el nombre venga abreviado
   const fuzzyFindMatch = (pred) => {
     // 1. Coincidencia exacta de matchKey
     let m = allMatches.find(m => m.matchKey === pred.matchKey);
@@ -271,16 +279,10 @@ document.getElementById("parseBtn").addEventListener("click", () => {
       (m.homeTeam + "_vs_" + m.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_") === pred.matchKey
     );
     if (m) return m;
-    // 3. Fuzzy: los nombres del parser contienen al menos las primeras palabras del nombre real
-    const pH = normTeam(pred.homeTeam);
-    const pA = normTeam(pred.awayTeam);
-    m = allMatches.find(m => {
-      const fH = normTeam(m.homeTeam);
-      const fA = normTeam(m.awayTeam);
-      return (fH.startsWith(pH) || pH.startsWith(fH) || fH.includes(pH) || pH.includes(fH)) &&
-             (fA.startsWith(pA) || pA.startsWith(fA) || fA.includes(pA) || pA.includes(fA));
-    });
-    return m || null;
+    // 3. Fuzzy palabra-por-palabra (maneja abreviaciones como "Rep. Checa", "Bosnia Herz.")
+    return allMatches.find(m =>
+      teamsMatch(pred.homeTeam, m.homeTeam) && teamsMatch(pred.awayTeam, m.awayTeam)
+    ) || null;
   };
 
   // Agrupar predicciones por semana para el preview
@@ -384,20 +386,19 @@ async function saveParticipant(parsed) {
   }
 
   // Helper fuzzy para save (misma lógica que preview)
-  const normTeamSave = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\./g,"").toLowerCase().trim();
+  const normTeamSave = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
+  const teamsMatchSave = (a, b) => {
+    const wa = normTeamSave(a).split(/\s+/);
+    const wb = normTeamSave(b).split(/\s+/);
+    if (wa.length !== wb.length) return false;
+    return wa.every((w, i) => wb[i].startsWith(w) || w.startsWith(wb[i]));
+  };
   const fuzzyFindSave = (pred) => {
     let m = matchByKey[pred.matchKey];
     if (m) return m;
     m = matchByKey[(pred.homeTeam + "_vs_" + pred.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_")];
     if (m) return m;
-    const pH = normTeamSave(pred.homeTeam);
-    const pA = normTeamSave(pred.awayTeam);
-    return allMatches.find(x => {
-      const fH = normTeamSave(x.homeTeam);
-      const fA = normTeamSave(x.awayTeam);
-      return (fH.startsWith(pH) || pH.startsWith(fH) || fH.includes(pH) || pH.includes(fH)) &&
-             (fA.startsWith(pA) || pA.startsWith(fA) || fA.includes(pA) || pA.includes(fA));
-    }) || null;
+    return allMatches.find(x => teamsMatchSave(pred.homeTeam, x.homeTeam) && teamsMatchSave(pred.awayTeam, x.awayTeam)) || null;
   };
 
   // Construir mapa de predicciones: matchKey → pred object
