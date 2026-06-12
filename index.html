@@ -214,8 +214,30 @@
     let espnLiveScores = {}; // matchKey → { homeScore, awayScore, status, clock }
     let espnPollInterval = null;
 
+    // Traducción de nombres ESPN (inglés) → nombres del sistema (español)
+    const ESPN_NAME_MAP = {
+      "south korea": "corea del sur",
+      "korea republic": "corea del sur",
+      "czech republic": "chequia",
+      "czechia": "chequia",
+      "united states": "estados unidos",
+      "usa": "estados unidos",
+      "ivory coast": "costa de marfil",
+      "iran": "iran",
+      "saudi arabia": "arabia saudita",
+      "south africa": "sudafrica",
+      "dr congo": "congo dr",
+      "democratic republic of congo": "congo dr",
+      "new zealand": "nueva zelanda",
+      "costa rica": "costa rica",
+      "trinidad & tobago": "trinidad y tobago",
+      "bosnia and herzegovina": "bosnia",
+      "north macedonia": "macedonia del norte",
+    };
+
     function normalizeTeam(s) {
-      return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      const clean = (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      return ESPN_NAME_MAP[clean] || clean;
     }
     function buildMatchKeyLocal(home, away) {
       return normalizeTeam(home) + "_vs_" + normalizeTeam(away);
