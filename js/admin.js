@@ -205,11 +205,11 @@ onSnapshot(doc(db, "config", "tournament"), snap => {
   }
 });
 
-// Participants (ordered by total points)
+// Participants (todos, sin orderBy para incluir los que no tienen totalPoints aún)
 onSnapshot(
-  query(collection(db, "participants"), orderBy("totalPoints", "desc")),
+  collection(db, "participants"),
   snap => {
-    allParticipants = snap.docs.map((d, i) => ({ id: d.id, rank: i + 1, ...d.data() }));
+    allParticipants = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
     renderParticipantsTable();
     updateCutPreview();
   }

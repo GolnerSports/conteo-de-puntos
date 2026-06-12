@@ -202,10 +202,9 @@
       renderLeaderboard();
     });
 
-    // Participants
-    const participantsQ = query(collection(db, "participants"), orderBy("totalPoints", "desc"));
-    onSnapshot(participantsQ, snap => {
-      allParticipants = snap.docs.map((d, i) => ({ id: d.id, rank: i + 1, ...d.data() }));
+    // Participants (sin orderBy para incluir los que no tienen totalPoints aún)
+    onSnapshot(collection(db, "participants"), snap => {
+      allParticipants = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
       updateStatsBar();
       renderLeaderboard();
     });
