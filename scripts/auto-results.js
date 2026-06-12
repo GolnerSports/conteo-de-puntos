@@ -166,7 +166,8 @@ async function fetchESPNMatches() {
     const home = comp?.competitors?.find(c => c.homeAway === "home");
     const away = comp?.competitors?.find(c => c.homeAway === "away");
     const statusType = comp?.status?.type?.name || "";
-    const inProgress = !comp?.status?.type?.completed && statusType === "STATUS_IN_PROGRESS";
+    const liveStatuses = ["STATUS_IN_PROGRESS","STATUS_FIRST_HALF","STATUS_SECOND_HALF","STATUS_HALFTIME","STATUS_END_PERIOD","STATUS_OVERTIME"];
+    const inProgress = !comp?.status?.type?.completed && liveStatuses.includes(statusType);
     return {
       homeTeam:  home?.team?.displayName || "",
       awayTeam:  away?.team?.displayName || "",
