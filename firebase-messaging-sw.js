@@ -27,8 +27,8 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon:     '/icons/icon-192.png',
-      badge:    '/icons/icon-192.png',
+      icon:     '/assets/icon-192.png',
+      badge:    '/assets/icon-192.png',
       vibrate:  [200, 100, 200],
       tag:      'golner-notif',
       renotify: true,

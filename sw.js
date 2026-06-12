@@ -5,7 +5,7 @@
  *   • Imágenes / iconos → Cache-first (cambian poco, carga rápida)
  */
 
-const CACHE_NAME = 'golner-sports-v9';
+const CACHE_NAME = 'golner-sports-v10';
 
 const STATIC_ASSETS = [
   '/index.html',
@@ -50,7 +50,7 @@ self.addEventListener('fetch', e => {
     url.includes('fonts.googleapis') ||
     url.includes('cdnjs.cloudflare') ||
     url.includes('chrome-extension')
-  ) return;
+  ) return e.respondWith(fetch(e.request));
 
   // Imágenes → cache-first
   if (/\.(png|jpg|jpeg|svg|gif|ico|webp)$/.test(url)) {
@@ -72,7 +72,7 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        if (res && res.status === 200 && res.type === 'basic') {
+        if (res && res.status === 200 && ['basic', 'cors'].includes(res.type)) {
           caches.open(CACHE_NAME).then(c => c.put(e.request, res.clone()));
         }
         return res;
