@@ -165,12 +165,15 @@ async function fetchESPNMatches() {
     const comp = ev.competitions?.[0];
     const home = comp?.competitors?.find(c => c.homeAway === "home");
     const away = comp?.competitors?.find(c => c.homeAway === "away");
+    const statusType = comp?.status?.type?.name || "";
+    const inProgress = !comp?.status?.type?.completed && statusType === "STATUS_IN_PROGRESS";
     return {
       homeTeam:  home?.team?.displayName || "",
       awayTeam:  away?.team?.displayName || "",
       homeScore: parseInt(home?.score || "0"),
       awayScore: parseInt(away?.score || "0"),
       completed: comp?.status?.type?.completed === true,
+      inProgress,
     };
   });
 }
@@ -226,10 +229,12 @@ async function main() {
 
   // 1. ESPN matches de hoy
   const espnMatches = await fetchESPNMatches();
-  const finished = espnMatches.filter(m => m.completed);
-  console.log(`⚽ Hoy: ${espnMatches.length} partidos, ${finished.length} terminados`);
+  const finished   = espnMatches.filter(m => m.completed);
+  const inProgress = espnMatches.filter(m => m.inProgress);
+  console.log(`⚽ Hoy: ${espnMatches.length} partidos, ${finished.length} terminados, ${inProgress.length} en vivo`);
 
-  if (!finished.length) { console.log("Sin partidos terminados. Fin."); return; }
+  // Si no hay nada que procesar, salir temprano
+  if (!finished.length && !inProgress.length) { console.log("Sin partidos activos. Fin."); return; }
 
   // 2. Cargar datos de Firestore (con caché para ahorrar lecturas)
   let cache = loadCache();
@@ -251,7 +256,24 @@ async function main() {
 
   console.log(`📋 Partidos: ${allMatches.length} | 👥 Participantes: ${allParticipants.length}`);
 
-  // 3. Verificar si hay partidos nuevos por procesar
+  // 3a. Marcar partidos en curso como "live" automáticamente
+  for (const espn of inProgress) {
+    const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const fsMatch = allMatches.find(m =>
+      m.matchKey === matchKey ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
+    );
+    if (fsMatch && !fsMatch.live && !fsMatch.finalized) {
+      await withRetry(() =>
+        db.collection("matches").doc(fsMatch.id).update({ live: true })
+      );
+      fsMatch.live = true;
+      console.log(`🟢 Partido iniciado automáticamente: ${espn.homeTeam} vs ${espn.awayTeam}`);
+      invalidateCache();
+    }
+  }
+
+  // 3b. Verificar si hay partidos nuevos por procesar
   const newlyFinished = finished.filter(espn => {
     const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
     const fsMatch = allMatches.find(m =>
@@ -265,6 +287,7 @@ async function main() {
     console.log("✅ Todos los partidos terminados ya están finalizados.");
     return;
   }
+
 
   console.log(`🆕 ${newlyFinished.length} partido(s) nuevos para procesar`);
 
