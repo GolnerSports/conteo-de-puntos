@@ -20,7 +20,7 @@ import {
 const FLAGS = {
   "México":"🇲🇽","Mexico":"🇲🇽",
   "Sudáfrica":"🇿🇦","Sudafrica":"🇿🇦",
-  "Arabia Saudí":"🇸🇦","Arabia Saudita":"🇸🇦",
+  "Arabia Saudí":"🇸🇦","Arabia Saudita":"🇸🇦","Arabia Saudi":"🇸🇦","Arabia Saúdi":"🇸🇦",
   "Uruguay":"🇺🇾",
   "España":"🇪🇸","Espana":"🇪🇸",
   "Cabo Verde":"🇨🇻",
@@ -64,7 +64,7 @@ const FLAGS = {
   "Canadá":"🇨🇦","Canada":"🇨🇦",
   "Qatar":"🇶🇦","Catar":"🇶🇦",
   "Irán":"🇮🇷","Iran":"🇮🇷",
-  "Nueva Zelanda":"🇳🇿",
+  "Nueva Zelanda":"🇳🇿","N. Zelanda":"🇳🇿","NZ":"🇳🇿",
   "Costa de Marfil":"🇨🇮",
   "Chequia":"🇨🇿",
   "Bosnia y Herzegovina":"🇧🇦",
