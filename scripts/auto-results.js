@@ -216,10 +216,11 @@ async function fsPatch(token, path, fields) {
 // ── ESPN ──────────────────────────────────────────────────────────────────────
 
 async function fetchESPNMatches() {
-  const today = new Date();
-  const yyyy  = today.getUTCFullYear();
-  const mm    = String(today.getUTCMonth() + 1).padStart(2, "0");
-  const dd    = String(today.getUTCDate()).padStart(2, "0");
+  // Usar hora de México (UTC-6) para determinar la fecha correcta
+  const now   = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  const yyyy  = now.getUTCFullYear();
+  const mm    = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd    = String(now.getUTCDate()).padStart(2, "0");
   const url   = `${ESPN_URL}?dates=${yyyy}${mm}${dd}`;
   console.log(`📡 Consultando ESPN: ${url}`);
   const data = await httpGet(url);
