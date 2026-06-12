@@ -323,16 +323,32 @@ async function saveParticipant(parsed) {
     ? allParticipants.find(p => (p.golnerId || "").toUpperCase() === parsed.golnerId)
     : allParticipants.find(p => (p.name || "").toLowerCase().trim() === parsed.name.toLowerCase().trim());
 
+  // Construir mapa de matchKey → match de Firestore (para enriquecer con week/phase)
+  const matchByKey = {};
+  for (const m of allMatches) {
+    if (m.matchKey) matchByKey[m.matchKey] = m;
+    // También indexar por matchKey normalizado de los equipos
+    const normKey = (m.homeTeam + "_vs_" + m.awayTeam)
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_");
+    matchByKey[normKey] = m;
+  }
+
   // Construir mapa de predicciones: matchKey → pred object
   const predictionsMap = {};
   for (const pred of parsed.predictions) {
+    const fsMatch = matchByKey[pred.matchKey] || matchByKey[
+      (pred.homeTeam + "_vs_" + pred.awayTeam)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_")
+    ];
     predictionsMap[pred.matchKey] = {
       matchKey:   pred.matchKey,
       homeTeam:   pred.homeTeam,
       awayTeam:   pred.awayTeam,
       prediction: pred.prediction,
       homeScore:  pred.homeScore,
-      awayScore:  pred.awayScore
+      awayScore:  pred.awayScore,
+      week:       fsMatch?.week  || null,
+      phase:      fsMatch?.phase || null,
     };
   }
 
@@ -1388,8 +1404,9 @@ window.openParticipantDrawer = (id) => {
   for (const [matchKey, pred] of Object.entries(p.predictions || {})) {
     if (playedKeys.has(matchKey)) continue;
     const match = matchByKey[matchKey];
-    const phase = match?.phase || "groups";
-    const week  = match?.week  || 1;
+    // Usar week/phase del partido en Firestore, o del campo guardado en la predicción
+    const phase = match?.phase || pred.phase || "groups";
+    const week  = match?.week  || pred.week  || 1;
     const key   = phase === "groups" ? `Semana ${week}` : phaseLabel(phase);
     if (!groups[key]) groups[key] = [];
     groups[key].push({ ...pred, isPending: true });
