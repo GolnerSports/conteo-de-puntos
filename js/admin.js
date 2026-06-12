@@ -384,9 +384,17 @@ function renderParticipantsTable() {
   const activeSorted = allParticipants
     .filter(p => p.status !== "eliminated")
     .slice()
-    .sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0));
+    .sort((a, b) => {
+      const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
+      if (ptsDiff !== 0) return ptsDiff;
+      // Desempate por marcadores exactos luego resultados correctos
+      const exactDiff = (b.exactScores || 0) - (a.exactScores || 0);
+      if (exactDiff !== 0) return exactDiff;
+      return (b.correctResults || 0) - (a.correctResults || 0);
+    });
+  // Solo los últimos atRiskCount están EN RIESGO (por índice, no por puntos)
   const atRiskIds = new Set(
-    activeSorted.slice(activeSorted.length - atRiskCount).map(p => p.id)
+    activeSorted.slice(Math.max(0, activeSorted.length - atRiskCount)).map(p => p.id)
   );
 
   tbody.innerHTML = filtered.map(p => {
