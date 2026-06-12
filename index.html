@@ -97,7 +97,6 @@
       </div>
       <div class="filter-pills">
         <button class="pill active" data-filter="all">Todos</button>
-        <button class="pill" data-filter="classified">Clasificados</button>
         <button class="pill" data-filter="risk">En riesgo</button>
         <button class="pill" data-filter="eliminated">Eliminados</button>
       </div>
@@ -396,11 +395,11 @@
       const search  = (document.getElementById("searchInput").value || "").toLowerCase();
 
       const total       = allParticipants.length;
-      const cutRank     = Math.ceil(total * (tournamentConfig.cutoffPct || 0.4));
       const atRiskCount = PHASE_RISK_MAP[tournamentConfig.phase || "groups"] || 0;
       const activeCount = allParticipants.filter(p => p.status !== "eliminated").length;
       // riskZone = el rank a partir del cual empieza EN RIESGO (los últimos atRiskCount)
       const riskZone    = activeCount - atRiskCount;
+      const cutRank     = 0; // No se usa en fase de grupos
 
       const medals = ["🥇","🥈","🥉"];
 
@@ -408,7 +407,7 @@
         const matchSearch = !search || p.name.toLowerCase().includes(search);
         const matchFilter =
           currentFilter === "all"        ? true :
-          currentFilter === "classified" ? p.rank <= cutRank :
+          currentFilter === "classified" ? p.status === "classified" :
           currentFilter === "risk"       ? (p.rank > riskZone && riskZone > 0) :
           currentFilter === "eliminated" ? p.status === "eliminated" : true;
         return matchSearch && matchFilter;
@@ -481,18 +480,17 @@
     }
 
     function getStatusInfo(p, cutRank, riskZone) {
-      // Eliminado manual siempre se respeta
+      // Eliminado manual (marcado por el admin)
       if (p.status === "eliminated")
         return { cls: "row-eliminated", badge: "eliminated", label: "Eliminado" };
 
-      // EN RIESGO = últimos atRiskCount por puntos (rank > riskZone)
+      // Clasificado manual (marcado por el admin en fases eliminatorias)
+      if (p.status === "classified")
+        return { cls: "row-classified", badge: "classified", label: "Clasificado" };
+
+      // EN RIESGO = últimos atRiskCount por puntos
       if (p.rank > riskZone && riskZone > 0)
         return { cls: "row-risk", badge: "risk", label: "En riesgo" };
-
-      // Clasificado (solo en fases eliminatorias)
-      const inGroups = (tournamentConfig.phase || "groups") === "groups";
-      if (!inGroups && p.rank <= cutRank)
-        return { cls: "row-classified", badge: "classified", label: "Clasificado" };
 
       return { cls: "", badge: "active", label: "Activo" };
     }
