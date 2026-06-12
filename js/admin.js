@@ -419,12 +419,14 @@ function renderParticipantsTable() {
 function statusClass(s) {
   if (s === "classified") return "classified";
   if (s === "eliminated") return "eliminated";
-  return "risk";
+  if (s === "at_risk")    return "risk";
+  return "active";
 }
 function statusLabel(s) {
   if (s === "classified") return "Clasificado";
   if (s === "eliminated") return "Eliminado";
-  return "Activo";
+  if (s === "at_risk")    return "EN RIESGO";
+  return "ACTIVO";
 }
 
 // ── Recalculate all ──────────────────────────────────────────────
