@@ -259,9 +259,38 @@ document.getElementById("parseBtn").addEventListener("click", () => {
         <i class="fa-solid fa-user-plus"></i> Participante nuevo — se registrará por primera vez
        </div>`;
 
+  // Agrupar predicciones por semana para el preview
+  const previewGroups = {};
+  for (const pred of parsedData.predictions) {
+    const fsMatch = allMatches.find(m =>
+      m.matchKey === pred.matchKey ||
+      (m.homeTeam + "_vs_" + m.awayTeam).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"_") === pred.matchKey
+    );
+    const week = fsMatch?.week || "?";
+    const label = fsMatch ? `Semana ${week}` : "Sin asignar";
+    if (!previewGroups[label]) previewGroups[label] = [];
+    previewGroups[label].push(pred);
+  }
+  const weekOrder = ["Semana 1","Semana 2","Semana 3","Sin asignar"];
+  const groupedPreviewHtml = weekOrder.filter(k => previewGroups[k]).map(label => `
+    <div style="margin-top:12px;font-size:11px;font-weight:700;color:rgba(57,255,20,0.7);text-transform:uppercase;letter-spacing:1px;padding:4px 0">${label}</div>
+    ${previewGroups[label].map(p => {
+      const predLabel = !p.prediction ? `<span style="color:#ff4444">Sin detectar</span>`
+        : p.prediction === "draw" ? `<span style="color:#ffaa00">Empate</span>`
+        : `<span style="color:#39FF14">Gana ${p.prediction === "home" ? p.homeTeam : p.awayTeam}</span>`;
+      const scoreLabel = p.homeScore !== null && p.awayScore !== null
+        ? `${p.homeScore} - ${p.awayScore}` : `<span style="color:#ff4444">Sin marcador</span>`;
+      return `<div class="preview-match">
+        <div class="preview-match-teams">${p.homeTeam} vs ${p.awayTeam}</div>
+        <div class="preview-match-prediction">${predLabel}</div>
+        <div class="preview-match-score">Marcador: ${scoreLabel}</div>
+      </div>`;
+    }).join("")}
+  `).join("");
+
   // Show preview
   document.getElementById("parserPreview").innerHTML =
-    statusBadge + GolnerParser.buildPreviewHTML(parsedData);
+    statusBadge + `<div class="preview-participant" style="padding:8px 0">${groupedPreviewHtml}</div>`;
 
   // Summary bar
   const summaryEl = document.getElementById("parseSummary");
