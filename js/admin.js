@@ -336,9 +336,14 @@ async function saveParticipant(parsed) {
     };
   }
 
-  // Calcular puntos con resultados reales actuales
+  // Combinar predicciones existentes con las nuevas (no borrar semanas anteriores)
+  const existingPredictions = existing ? (existing.predictions || {}) : {};
+  const mergedPredictions = { ...existingPredictions, ...predictionsMap };
+
+  // Calcular puntos con TODAS las predicciones combinadas
+  const allPredsList = Object.values(mergedPredictions);
   const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
-    GolnerScoring.calcParticipantTotal(parsed.predictions, allResults);
+    GolnerScoring.calcParticipantTotal(allPredsList, allResults);
 
   const participantData = {
     name:            parsed.name,
@@ -348,7 +353,7 @@ async function saveParticipant(parsed) {
     weekPoints,
     phasePoints,
     matchBreakdown,
-    predictions:     predictionsMap,
+    predictions:     mergedPredictions,
     updatedAt:       serverTimestamp()
   };
 
