@@ -81,9 +81,11 @@ const ESPN_NAME_MAP = {
   "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil",
   "saudi arabia": "arabia saudita",
   "south africa": "sudafrica",
-  "congo dr": "congo dr", "dr congo": "congo dr", "democratic republic of congo": "congo dr",
+  "congo dr": "rd congo", "dr congo": "rd congo", "democratic republic of congo": "rd congo",
+  "republic of congo": "rd congo",
   "new zealand": "nueva zelanda",
-  "bosnia-herzegovina": "bosnia", "bosnia and herzegovina": "bosnia",
+  "bosnia-herzegovina": "bosnia herzegovina", "bosnia and herzegovina": "bosnia herzegovina",
+  "czechia": "republica checa", "czech republic": "republica checa",
   "turkiye": "turquia", "turkey": "turquia",
   "netherlands": "paises bajos", "holland": "paises bajos",
   "algeria": "argelia", "germany": "alemania", "belgium": "belgica",
@@ -93,6 +95,10 @@ const ESPN_NAME_MAP = {
   "curacao": "curazao", "jordan": "jordania", "scotland": "escocia",
   "england": "inglaterra", "haiti": "haiti", "iran": "iran",
   "iraq": "irak", "austria": "austria", "qatar": "catar",
+  "panama": "panama", "croatia": "croacia", "senegal": "senegal",
+  "colombia": "colombia", "ghana": "ghana", "portugal": "portugal",
+  "argentina": "argentina", "france": "francia", "spain": "espana",
+  "brazil": "brasil", "ecuador": "ecuador", "japan": "japon",
 };
 
 function normalize(s) {
