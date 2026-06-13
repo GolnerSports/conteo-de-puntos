@@ -271,12 +271,19 @@ async function main() {
       m.matchKey === matchKey ||
       buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
     );
-    if (fsMatch && !fsMatch.live && !fsMatch.finalized) {
+    if (fsMatch && !fsMatch.finalized) {
+      const update = {
+        live: true,
+        liveHomeScore: espn.homeScore,
+        liveAwayScore: espn.awayScore,
+      };
       await withRetry(() =>
-        db.collection("matches").doc(fsMatch.id).update({ live: true })
+        db.collection("matches").doc(fsMatch.id).update(update)
       );
       fsMatch.live = true;
-      console.log(`🟢 Partido iniciado automáticamente: ${espn.homeTeam} vs ${espn.awayTeam}`);
+      fsMatch.liveHomeScore = espn.homeScore;
+      fsMatch.liveAwayScore = espn.awayScore;
+      console.log(`🟢 En vivo: ${espn.homeTeam} ${espn.homeScore}-${espn.awayScore} ${espn.awayTeam}`);
       invalidateCache();
     }
   }
