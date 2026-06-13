@@ -77,6 +77,7 @@ const ESPN_NAME_MAP = {
   "south korea": "corea del sur", "korea republic": "corea del sur",
   "czechia": "chequia", "czech republic": "chequia",
   "united states": "estados unidos", "usa": "estados unidos",
+  "ee.uu.": "estados unidos", "ee uu": "estados unidos", "eeuu": "estados unidos",
   "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil",
   "saudi arabia": "arabia saudita",
   "south africa": "sudafrica",
