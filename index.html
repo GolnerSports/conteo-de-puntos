@@ -498,7 +498,7 @@
                 </div>
                 <div style="text-align:center;flex-shrink:0">
                   <div class="result-score" style="color:#39ff14">${m.liveHomeScore ?? 0} - ${m.liveAwayScore ?? 0}</div>
-                  ${m.espnClock ? `<div style="font-size:11px;color:#ef4444;font-weight:700">${m.espnClock}'</div>` : ""}
+                  ${m.espnClock ? `<div style="font-size:11px;color:#ef4444;font-weight:700">${m.espnClock.replace(/'+$/, "")}'</div>` : ""}
                 </div>
                 <div class="result-team away-team">
                   <span class="result-team-name">${escHtml(m.awayTeam)}</span>
