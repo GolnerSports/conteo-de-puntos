@@ -1,15 +1,10 @@
 name: Auto Results - GOLNER SPORTS
 
 on:
-  schedule:
-    # Corre cada 5 minutos durante horas de partidos (12:00 - 04:00 UTC)
-    # Mundial 2026: partidos entre 17:00-02:00 hora México (22:00-07:00 UTC)
-    - cron: '*/5 22-23 * * *'
-    - cron: '*/5 0-7 * * *'
-    # También a mediodía por si hay partidos tempranos
-    - cron: '*/5 17-21 * * *'
+  # El scheduler de GitHub Actions tiene retrasos impredecibles.
+  # Ahora cron-job.org dispara este workflow via workflow_dispatch cada 5 min.
   workflow_dispatch:
-    # Permite correrlo manualmente desde GitHub
+    # Disparado por cron-job.org cada 5 minutos (confiable) o manualmente
 
 jobs:
   update-results:
