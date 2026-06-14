@@ -126,12 +126,20 @@ function calcParticipantTotal(predictions, allResults) {
   const matchBreakdown = [];
   let totalPoints = 0;
 
+  // Indexar predicciones por múltiples variantes del matchKey para tolerancia de nombres
   const predMap = {};
-  for (const p of predictions) predMap[p.matchKey] = p;
+  for (const p of predictions) {
+    predMap[p.matchKey] = p;
+    // También indexar por matchKey normalizado (quita puntos, aplica aliases)
+    const normKey = buildMatchKey(p.homeTeam || "", p.awayTeam || "");
+    if (normKey && normKey !== p.matchKey) predMap[normKey] = p;
+  }
 
   for (const [matchKey, real] of Object.entries(allResults)) {
     if (!real.played) continue;
-    const pred = predMap[matchKey] || { prediction: null, homeScore: null, awayScore: null };
+    // Buscar predicción: primero por matchKey exacto, luego por matchKey normalizado del partido real
+    const altKey = buildMatchKey(real.homeTeam || "", real.awayTeam || "");
+    const pred = predMap[matchKey] || predMap[altKey] || { prediction: null, homeScore: null, awayScore: null };
     const pts  = calcMatchPoints(pred, real);
     totalPoints += pts.total;
     const week  = real.week;
