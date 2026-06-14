@@ -149,6 +149,10 @@
 
   <!-- ── VISTA: RESULTADOS ─────────────────────────────────────── -->
   <main class="main-content pub-view" id="view-resultados">
+    <div style="padding: 16px 16px 4px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:20px;font-weight:800;letter-spacing:0.5px;color:#fff">Resultados</span>
+      <span id="liveChipHeader" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.5px;animation:pulse-text 1.2s infinite">● EN VIVO</span>
+    </div>
     <div id="resultsGrouped">
       <div class="loading-state"><div class="spinner"></div><p>Cargando resultados…</p></div>
     </div>
@@ -337,12 +341,15 @@
       const hasLive = allMatchesData.some(m => m.live && !m.played);
       const navIcon  = document.getElementById("navResultadosIcon");
       const navLabel = document.getElementById("navResultadosLabel");
+      const liveChip = document.getElementById("liveChipHeader");
       if (hasLive) {
         navIcon.style.color  = "#ef4444";
         navLabel.innerHTML   = `<span style="color:#ef4444;animation:pulse-text 1.2s infinite;font-weight:700">● EN VIVO</span>`;
+        if (liveChip) liveChip.style.display = "inline-block";
       } else {
         navIcon.style.color  = "";
         navLabel.textContent = "Resultados";
+        if (liveChip) liveChip.style.display = "none";
       }
     });
 
@@ -568,6 +575,8 @@
         document.querySelectorAll(".pub-view").forEach(v => v.classList.remove("active"));
         btn.classList.add("active");
         document.getElementById("view-" + btn.dataset.view).classList.add("active");
+        // Ocultar hero y stats bar cuando se ve la pantalla de resultados
+        document.body.classList.toggle("view-resultados-active", btn.dataset.view === "resultados");
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });

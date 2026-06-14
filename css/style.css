@@ -515,6 +515,10 @@ input, select, textarea {
 .pub-view { display: none; }
 .pub-view.active { display: block; }
 
+/* Cuando la vista de resultados está activa, ocultar hero y stats */
+body.view-resultados-active .hero,
+body.view-resultados-active .stats-bar { display: none; }
+
 .pub-bottom-nav {
   display: flex;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
