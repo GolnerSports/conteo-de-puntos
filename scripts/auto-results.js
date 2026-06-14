@@ -126,18 +126,20 @@ function calcParticipantTotal(predictions, allResults) {
   const matchBreakdown = [];
   let totalPoints = 0;
 
-  // Indexar predicciones por múltiples variantes del matchKey para tolerancia de nombres
+  // Indexar predicciones usando TANTO la clave del dict como el campo matchKey interno
   const predMap = {};
-  for (const p of predictions) {
-    predMap[p.matchKey] = p;
-    // También indexar por matchKey normalizado (quita puntos, aplica aliases)
+  for (const [dictKey, p] of Object.entries(predictions)) {
+    const mk = p.matchKey || dictKey;  // usar clave del dict si el objeto no tiene matchKey
+    predMap[dictKey] = { ...p, matchKey: mk };
+    if (mk !== dictKey) predMap[mk] = { ...p, matchKey: mk };
+    // También indexar por matchKey normalizado (resuelve EE.UU. → estados unidos, etc.)
     const normKey = buildMatchKey(p.homeTeam || "", p.awayTeam || "");
-    if (normKey && normKey !== p.matchKey) predMap[normKey] = p;
+    if (normKey && normKey !== mk && normKey !== dictKey) predMap[normKey] = { ...p, matchKey: mk };
   }
 
   for (const [matchKey, real] of Object.entries(allResults)) {
     if (!real.played) continue;
-    // Buscar predicción: primero por matchKey exacto, luego por matchKey normalizado del partido real
+    // Buscar predicción: exacto, luego normalizado del partido real
     const altKey = buildMatchKey(real.homeTeam || "", real.awayTeam || "");
     const pred = predMap[matchKey] || predMap[altKey] || { prediction: null, homeScore: null, awayScore: null };
     const pts  = calcMatchPoints(pred, real);
