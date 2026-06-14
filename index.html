@@ -221,81 +221,31 @@
 
     // Traducción de nombres ESPN (inglés) → nombres del sistema (español)
     const ESPN_NAME_MAP = {
-      // Corea
-      "south korea": "corea del sur",
-      "korea republic": "corea del sur",
-      // Chequia
-      "czechia": "chequia",
-      "czech republic": "chequia",
-      // Estados Unidos
-      "united states": "estados unidos",
-      "usa": "estados unidos",
-      // Costa de Marfil
-      "ivory coast": "costa de marfil",
-      "cote d'ivoire": "costa de marfil",
-      // Arabia Saudita
+      "united states": "estados unidos", "usa": "estados unidos",
+      "ee.uu.": "estados unidos", "ee uu": "estados unidos", "eeuu": "estados unidos",
+      "u.s.": "estados unidos",
+      "czechia": "republica checa", "czech republic": "republica checa", "chequia": "republica checa",
+      "south korea": "corea del sur", "korea republic": "corea del sur", "korea": "corea del sur",
+      "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil", "cote divoire": "costa de marfil",
       "saudi arabia": "arabia saudita",
-      // Sudáfrica
       "south africa": "sudafrica",
-      // Congo
-      "congo dr": "congo dr",
-      "dr congo": "congo dr",
-      "democratic republic of congo": "congo dr",
-      // Nueva Zelanda
-      "new zealand": "nueva zelanda",
-      // Bosnia
-      "bosnia-herzegovina": "bosnia",
-      "bosnia and herzegovina": "bosnia",
-      // Turquía
-      "turkiye": "turquia",
-      "turkey": "turquia",
-      // Países Bajos
-      "netherlands": "paises bajos",
-      "holland": "paises bajos",
-      // Argelia
-      "algeria": "argelia",
-      // Alemania
-      "germany": "alemania",
-      // Bélgica
-      "belgium": "belgica",
-      // Suiza
-      "switzerland": "suiza",
-      // Suecia
-      "sweden": "suecia",
-      // Noruega
-      "norway": "noruega",
-      // Marruecos
-      "morocco": "marruecos",
-      // Egipto
-      "egypt": "egipto",
-      // Túnez
-      "tunisia": "tunez",
-      // Senegal
-      "senegal": "senegal",
-      // Ghana
-      "ghana": "ghana",
-      // Cabo Verde
-      "cape verde": "cabo verde",
-      // Uzbekistán
-      "uzbekistan": "uzbekistan",
-      // Curazao
-      "curacao": "curazao",
-      // Jordania
-      "jordan": "jordania",
-      // Escocia
-      "scotland": "escocia",
-      // Inglaterra
-      "england": "inglaterra",
-      // Haití
-      "haiti": "haiti",
-      // Irán
-      "iran": "iran",
-      // Irak
-      "iraq": "irak",
-      // Austria
-      "austria": "austria",
-      // Catar
-      "qatar": "catar",
+      "dr congo": "rd congo", "congo dr": "rd congo", "democratic republic of congo": "rd congo", "drc": "rd congo",
+      "bosnia-herzegovina": "bosnia herzegovina", "bosnia and herzegovina": "bosnia herzegovina", "bosnia & herzegovina": "bosnia herzegovina",
+      "turkiye": "turquia", "turkey": "turquia",
+      "netherlands": "paises bajos", "holland": "paises bajos",
+      "algeria": "argelia", "germany": "alemania", "belgium": "belgica",
+      "switzerland": "suiza", "sweden": "suecia", "norway": "noruega",
+      "morocco": "marruecos", "egypt": "egipto", "tunisia": "tunez",
+      "cape verde": "cabo verde", "curacao": "curazao", "jordan": "jordania",
+      "scotland": "escocia", "england": "inglaterra", "haiti": "haiti",
+      "iran": "iran", "iraq": "irak", "austria": "austria",
+      "qatar": "qatar", "new zealand": "nueva zelanda",
+      "panama": "panama", "croatia": "croacia", "senegal": "senegal",
+      "colombia": "colombia", "ghana": "ghana", "portugal": "portugal",
+      "argentina": "argentina", "france": "francia", "spain": "espana",
+      "brazil": "brasil", "ecuador": "ecuador", "japan": "japon",
+      "mexico": "mexico", "canada": "canada", "australia": "australia",
+      "uruguay": "uruguay", "uzbekistan": "uzbekistan", "paraguay": "paraguay",
     };
 
     function normalizeTeam(s) {
@@ -306,17 +256,28 @@
       return normalizeTeam(home) + "_vs_" + normalizeTeam(away);
     }
 
+    function espnDateStr(d) {
+      return `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`;
+    }
+
     async function fetchESPNLive() {
       try {
-        // Hora México (UTC-6)
-        const now  = new Date(Date.now() - 6 * 60 * 60 * 1000);
-        const yyyy = now.getUTCFullYear();
-        const mm   = String(now.getUTCMonth() + 1).padStart(2, "0");
-        const dd   = String(now.getUTCDate()).padStart(2, "0");
-        const url  = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        const events = data.events || [];
+        // Consultar ESPN por DOS fechas: UTC y hora México (UTC-6)
+        // Partidos después de las 6 PM México son del día siguiente en UTC
+        const dateUtc = espnDateStr(new Date());
+        const dateMex = espnDateStr(new Date(Date.now() - 6*60*60*1000));
+        const dates   = [...new Set([dateUtc, dateMex])];
+
+        const allEvents = [];
+        for (const d of dates) {
+          const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${d}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          allEvents.push(...(data.events || []));
+        }
+        // Deduplicar por ID
+        const seen = new Set();
+        const events = allEvents.filter(ev => { if(seen.has(ev.id)) return false; seen.add(ev.id); return true; });
 
         let hasLive = false;
         const newScores = {};

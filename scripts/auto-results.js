@@ -303,8 +303,9 @@ async function fetchESPNMatches() {
     const comp       = ev.competitions?.[0];
     const home       = comp?.competitors?.find(c => c.homeAway === "home");
     const away       = comp?.competitors?.find(c => c.homeAway === "away");
-    const statusType = comp?.status?.type?.name || "";
-    const completed  = comp?.status?.type?.completed === true;
+    const statusType   = comp?.status?.type?.name || "";
+    const completed    = comp?.status?.type?.completed === true;
+    const clock        = comp?.status?.displayClock || "";
     // Un partido está en vivo si NO está completado Y su estado está en la lista
     // O si ESPN lo marca explícitamente como en progreso pero con un estado desconocido
     const inProgress = !completed && (
@@ -322,7 +323,8 @@ async function fetchESPNMatches() {
       awayScore:   parseInt(away?.score   || "0"),
       completed,
       inProgress,
-      statusType, // guardarlo para debug en logs
+      statusType,
+      clock,       // minuto del partido (ej. "45'", "90'+2")
     };
   });
 }
@@ -445,6 +447,7 @@ async function main() {
         live: true,
         liveHomeScore: espn.homeScore,
         liveAwayScore: espn.awayScore,
+        liveClock: espn.clock || "",
       };
       await withRetry(() =>
         db.collection("matches").doc(fsMatch.id).update(update)
