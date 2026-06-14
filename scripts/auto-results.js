@@ -335,16 +335,37 @@ async function withRetry(fn, retries = 3, delayMs = 5000) {
     try {
       return await fn();
     } catch(e) {
-      const isRetryable = e.code === 8 || e.code === 14 ||
-        (e.message || "").includes("RESOURCE_EXHAUSTED") ||
-        (e.message || "").includes("UNAVAILABLE");
+      const msg = e.message || "";
+      const isRetryable =
+        e.code === 8  || e.code === 14 ||
+        msg.includes("RESOURCE_EXHAUSTED") ||
+        msg.includes("UNAVAILABLE") ||
+        msg.includes("DEADLINE_EXCEEDED") ||
+        msg.includes("timeout") ||
+        msg.includes("INTERNAL");
       if (isRetryable && attempt < retries) {
         const wait = delayMs * attempt;
-        console.log(`⏳ Intento ${attempt}/${retries} fallido. Reintentando en ${wait/1000}s...`);
+        console.log(`⏳ Intento ${attempt}/${retries} fallido (${e.code || msg.slice(0,40)}). Reintentando en ${wait/1000}s...`);
         await new Promise(r => setTimeout(r, wait));
       } else {
         throw e;
       }
+    }
+  }
+}
+
+// Escribe en Firestore dividiendo en lotes de máx. 499 ops (límite de Firestore)
+async function commitInBatches(db, updates) {
+  const BATCH_LIMIT = 499;
+  for (let i = 0; i < updates.length; i += BATCH_LIMIT) {
+    const chunk = updates.slice(i, i + BATCH_LIMIT);
+    const batch = db.batch();
+    for (const { ref, data } of chunk) {
+      batch.update(ref, data);
+    }
+    await withRetry(() => batch.commit());
+    if (updates.length > BATCH_LIMIT) {
+      console.log(`  📦 Lote ${Math.floor(i/BATCH_LIMIT)+1}/${Math.ceil(updates.length/BATCH_LIMIT)} guardado`);
     }
   }
 }
@@ -446,15 +467,11 @@ async function main() {
     console.log("✅ Todos los partidos terminados ya están finalizados.");
     if (Object.keys(allResults).length > 0) {
       console.log("🔄 Recalculando puntos de todos los participantes...");
-      const batch = db.batch();
-      for (const p of allParticipants) {
+      const updates = allParticipants.map(p => {
         const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-        batch.update(db.collection("participants").doc(p.id), {
-          totalPoints, weekPoints, phasePoints, matchBreakdown,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      await withRetry(() => batch.commit());
+        return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+      });
+      await commitInBatches(db, updates);
       console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
       invalidateCache();
     }
@@ -519,16 +536,11 @@ async function main() {
     if (fsMatch.matchKey && fsMatch.matchKey !== matchKey) allResults[fsMatch.matchKey] = newEntry;
 
     // Recalcular puntos de todos los participantes
-    const batch = db.batch();
-    for (const p of allParticipants) {
-      
+    const updates = allParticipants.map(p => {
       const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-      batch.update(db.collection("participants").doc(p.id), {
-        totalPoints, weekPoints, phasePoints, matchBreakdown,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    await withRetry(() => batch.commit());
+      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+    });
+    await commitInBatches(db, updates);
     console.log(`  👥 ${allParticipants.length} participantes actualizados`);
 
     // Notificación push
@@ -543,16 +555,11 @@ async function main() {
   // (esto corrige casos donde el matchKey cambió o hubo errores previos)
   if (!anyUpdated && Object.keys(allResults).length > 0) {
     console.log("🔄 Recalculando puntos de todos los participantes...");
-    const batch = db.batch();
-    for (const p of allParticipants) {
-      
+    const updates = allParticipants.map(p => {
       const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-      batch.update(db.collection("participants").doc(p.id), {
-        totalPoints, weekPoints, phasePoints, matchBreakdown,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    await withRetry(() => batch.commit());
+      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+    });
+    await commitInBatches(db, updates);
     console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
     invalidateCache();
   } else if (anyUpdated) {
