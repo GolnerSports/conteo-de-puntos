@@ -24,6 +24,8 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png" />
+  <!-- Precargar logo para splash instantáneo -->
+  <link rel="preload" as="image" href="/assets/icon-512.png" />
 </head>
 <body class="public-page">
 
@@ -62,12 +64,12 @@
   </style>
 
   <script>
-    // Ocultar splash después de 1.8 segundos
-    window.addEventListener('load', () => {
+    // Ocultar splash después de 1.8 segundos desde que el DOM está listo
+    document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const splash = document.getElementById('splashScreen');
         splash.classList.add('hide');
-        setTimeout(() => splash.remove(), 650);
+        setTimeout(() => splash.remove(), 700);
       }, 1800);
     });
   </script>
