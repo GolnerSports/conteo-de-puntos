@@ -73,32 +73,105 @@ function invalidateCache() {
 }
 
 // ── ESPN TEAM NAME MAP ────────────────────────────────────────────────────────
+// Mapea nombres en inglés / variantes → nombre canónico en español (sin acentos)
+// para que buildMatchKey() siempre produzca el mismo key sin importar la fuente.
 const ESPN_NAME_MAP = {
-  "south korea": "corea del sur", "korea republic": "corea del sur",
-  "czechia": "chequia", "czech republic": "chequia",
-  "united states": "estados unidos", "usa": "estados unidos",
-  "ee.uu.": "estados unidos", "ee uu": "estados unidos", "eeuu": "estados unidos",
-  "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil",
-  "saudi arabia": "arabia saudita",
-  "south africa": "sudafrica",
-  "congo dr": "rd congo", "dr congo": "rd congo", "democratic republic of congo": "rd congo",
-  "republic of congo": "rd congo",
-  "new zealand": "nueva zelanda",
-  "bosnia-herzegovina": "bosnia herzegovina", "bosnia and herzegovina": "bosnia herzegovina",
-  "czechia": "republica checa", "czech republic": "republica checa",
-  "turkiye": "turquia", "turkey": "turquia",
-  "netherlands": "paises bajos", "holland": "paises bajos",
-  "algeria": "argelia", "germany": "alemania", "belgium": "belgica",
-  "switzerland": "suiza", "sweden": "suecia", "norway": "noruega",
-  "morocco": "marruecos", "egypt": "egipto", "tunisia": "tunez",
-  "cape verde": "cabo verde", "uzbekistan": "uzbekistan",
-  "curacao": "curazao", "jordan": "jordania", "scotland": "escocia",
-  "england": "inglaterra", "haiti": "haiti", "iran": "iran",
-  "iraq": "irak", "austria": "austria", "qatar": "catar",
-  "panama": "panama", "croatia": "croacia", "senegal": "senegal",
-  "colombia": "colombia", "ghana": "ghana", "portugal": "portugal",
-  "argentina": "argentina", "france": "francia", "spain": "espana",
-  "brazil": "brasil", "ecuador": "ecuador", "japan": "japon",
+  // ── Estados Unidos ──
+  "united states":          "estados unidos",
+  "usa":                    "estados unidos",
+  "ee.uu.":                 "estados unidos",
+  "ee uu":                  "estados unidos",
+  "eeuu":                   "estados unidos",
+  "u.s.":                   "estados unidos",
+  "us":                     "estados unidos",
+
+  // ── República Checa ──
+  "czechia":                "republica checa",
+  "czech republic":         "republica checa",
+  "chequia":                "republica checa",   // variante usada en semana 1
+
+  // ── Corea del Sur ──
+  "south korea":            "corea del sur",
+  "korea republic":         "corea del sur",
+  "korea":                  "corea del sur",
+
+  // ── Costa de Marfil ──
+  "ivory coast":            "costa de marfil",
+  "cote d'ivoire":          "costa de marfil",
+  "cote divoire":           "costa de marfil",
+
+  // ── Arabia Saudita ──
+  "saudi arabia":           "arabia saudita",
+
+  // ── Sudáfrica ──
+  "south africa":           "sudafrica",
+
+  // ── RD Congo ──
+  "dr congo":               "rd congo",
+  "congo dr":               "rd congo",
+  "democratic republic of congo": "rd congo",
+  "drc":                    "rd congo",
+  "congo, dr":              "rd congo",
+
+  // ── Bosnia Herzegovina ──
+  "bosnia-herzegovina":     "bosnia herzegovina",
+  "bosnia and herzegovina": "bosnia herzegovina",
+  "bosnia & herzegovina":   "bosnia herzegovina",
+
+  // ── Turquía ──
+  "turkiye":                "turquia",
+  "turkey":                 "turquia",
+
+  // ── Países Bajos ──
+  "netherlands":            "paises bajos",
+  "holland":                "paises bajos",
+
+  // ── Resto del mundo (inglés → español) ──
+  "algeria":                "argelia",
+  "germany":                "alemania",
+  "belgium":                "belgica",
+  "switzerland":            "suiza",
+  "sweden":                 "suecia",
+  "norway":                 "noruega",
+  "morocco":                "marruecos",
+  "egypt":                  "egipto",
+  "tunisia":                "tunez",
+  "cape verde":             "cabo verde",
+  "curacao":                "curazao",
+  "jordan":                 "jordania",
+  "scotland":               "escocia",
+  "england":                "inglaterra",
+  "haiti":                  "haiti",
+  "iran":                   "iran",
+  "iraq":                   "irak",
+  "austria":                "austria",
+  "qatar":                  "catar",
+  "new zealand":            "nueva zelanda",
+  "panama":                 "panama",
+  "croatia":                "croacia",
+  "senegal":                "senegal",
+  "colombia":               "colombia",
+  "ghana":                  "ghana",
+  "portugal":               "portugal",
+  "argentina":              "argentina",
+  "france":                 "francia",
+  "spain":                  "espana",
+  "brazil":                 "brasil",
+  "ecuador":                "ecuador",
+  "japan":                  "japon",
+  "mexico":                 "mexico",
+  "canada":                 "canada",
+  "australia":              "australia",
+  "uruguay":                "uruguay",
+  "uzbekistan":             "uzbekistan",
+  "paraguay":               "paraguay",
+
+  // ── Variantes con acento que llegan sin NFD ──
+  "belgica":                "belgica",
+  "espana":                 "espana",
+  "tunez":                  "tunez",
+  "japon":                  "japon",
+  "turquia":                "turquia",
 };
 
 function normalize(s) {
@@ -169,6 +242,23 @@ function httpGet(url) {
   });
 }
 
+// Estados de ESPN que indican que el partido está en curso
+// (incluye tiempo normal, medio tiempo, tiempo extra y penales)
+const LIVE_STATUSES = new Set([
+  "STATUS_IN_PROGRESS",
+  "STATUS_FIRST_HALF",
+  "STATUS_SECOND_HALF",
+  "STATUS_HALFTIME",
+  "STATUS_END_PERIOD",
+  "STATUS_OVERTIME",
+  "STATUS_EXTRA_TIME",
+  "STATUS_PENALTY",
+  "STATUS_SHOOTOUT",
+  "STATUS_PAUSE",
+  "STATUS_DELAYED",
+  "STATUS_RAIN_DELAY",
+]);
+
 async function fetchESPNMatches() {
   // Hora México UTC-6
   const now  = new Date(Date.now() - 6 * 60 * 60 * 1000);
@@ -177,21 +267,39 @@ async function fetchESPNMatches() {
   const dd   = String(now.getUTCDate()).padStart(2, "0");
   const url  = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`;
   console.log(`📡 ESPN: ${url}`);
-  const data = await httpGet(url);
+
+  let data;
+  try {
+    data = await httpGet(url);
+  } catch(e) {
+    console.log(`⚠️ Error al consultar ESPN: ${e.message}. Se omite este ciclo.`);
+    return null; // null = señal de fallo, el llamador lo maneja
+  }
+
   return (data.events || []).map(ev => {
-    const comp = ev.competitions?.[0];
-    const home = comp?.competitors?.find(c => c.homeAway === "home");
-    const away = comp?.competitors?.find(c => c.homeAway === "away");
+    const comp       = ev.competitions?.[0];
+    const home       = comp?.competitors?.find(c => c.homeAway === "home");
+    const away       = comp?.competitors?.find(c => c.homeAway === "away");
     const statusType = comp?.status?.type?.name || "";
-    const liveStatuses = ["STATUS_IN_PROGRESS","STATUS_FIRST_HALF","STATUS_SECOND_HALF","STATUS_HALFTIME","STATUS_END_PERIOD","STATUS_OVERTIME"];
-    const inProgress = !comp?.status?.type?.completed && liveStatuses.includes(statusType);
+    const completed  = comp?.status?.type?.completed === true;
+    // Un partido está en vivo si NO está completado Y su estado está en la lista
+    // O si ESPN lo marca explícitamente como en progreso pero con un estado desconocido
+    const inProgress = !completed && (
+      LIVE_STATUSES.has(statusType) ||
+      comp?.status?.type?.state === "in"   // estado genérico de ESPN para "en curso"
+    );
+    if (statusType && !completed && !inProgress) {
+      // Log para detectar estados nuevos que ESPN pueda introducir
+      console.log(`  ℹ️  Estado ESPN desconocido: "${statusType}" — ${home?.team?.displayName} vs ${away?.team?.displayName}`);
+    }
     return {
-      homeTeam:  home?.team?.displayName || "",
-      awayTeam:  away?.team?.displayName || "",
-      homeScore: parseInt(home?.score || "0"),
-      awayScore: parseInt(away?.score || "0"),
-      completed: comp?.status?.type?.completed === true,
+      homeTeam:    home?.team?.displayName || "",
+      awayTeam:    away?.team?.displayName || "",
+      homeScore:   parseInt(home?.score   || "0"),
+      awayScore:   parseInt(away?.score   || "0"),
+      completed,
       inProgress,
+      statusType, // guardarlo para debug en logs
     };
   });
 }
@@ -247,9 +355,16 @@ async function main() {
 
   // 1. ESPN matches de hoy
   const espnMatches = await fetchESPNMatches();
+  if (espnMatches === null) {
+    console.log("❌ No se pudo conectar con ESPN. Se reintentará en el próximo ciclo (5 min).");
+    return;
+  }
   const finished   = espnMatches.filter(m => m.completed);
   const inProgress = espnMatches.filter(m => m.inProgress);
   console.log(`⚽ Hoy: ${espnMatches.length} partidos, ${finished.length} terminados, ${inProgress.length} en vivo`);
+  if (inProgress.length) {
+    console.log(`  🟢 En vivo: ${inProgress.map(m => `${m.homeTeam} ${m.homeScore}-${m.awayScore} ${m.awayTeam} [${m.statusType}]`).join(" | ")}`);
+  }
 
   // Si no hay nada que procesar, salir temprano
   if (!finished.length && !inProgress.length) { console.log("Sin partidos activos. Fin."); return; }
@@ -308,16 +423,22 @@ async function main() {
     return fsMatch && !(fsMatch.played && fsMatch.finalized);
   });
 
-  // 4. Construir mapa de resultados actuales
+  // 4. Construir mapa de resultados actuales (indexado por múltiples variantes del matchKey)
   const allResults = {};
   for (const m of allMatches) {
     if (m.played && m.matchKey) {
-      allResults[m.matchKey] = {
+      const entry = {
         played: true, result: m.result,
         homeScore: m.homeScore, awayScore: m.awayScore,
         homeTeam: m.homeTeam, awayTeam: m.awayTeam,
         week: m.week, phase: m.phase || "groups"
       };
+      // Indexar por la clave almacenada en Firestore
+      allResults[m.matchKey] = entry;
+      // Indexar también por la clave normalizada construida desde homeTeam/awayTeam
+      // (resuelve desfases: "chequia" en matchKey vs "republica checa" en predicción, etc.)
+      const normKey = buildMatchKey(m.homeTeam || "", m.awayTeam || "");
+      if (normKey && normKey !== m.matchKey) allResults[normKey] = entry;
     }
   }
 
@@ -385,13 +506,17 @@ async function main() {
     fsMatch.homeScore = espn.homeScore;
     fsMatch.awayScore = espn.awayScore;
 
-    // Agregar al mapa de resultados
-    allResults[matchKey] = {
+    // Agregar al mapa de resultados (con variante normalizada para predMap lookup)
+    const newEntry = {
       played: true, result,
       homeScore: espn.homeScore, awayScore: espn.awayScore,
       homeTeam: fsMatch.homeTeam, awayTeam: fsMatch.awayTeam,
       week: fsMatch.week, phase: fsMatch.phase || "groups"
     };
+    allResults[matchKey] = newEntry;
+    const normResKey = buildMatchKey(fsMatch.homeTeam || "", fsMatch.awayTeam || "");
+    if (normResKey && normResKey !== matchKey) allResults[normResKey] = newEntry;
+    if (fsMatch.matchKey && fsMatch.matchKey !== matchKey) allResults[fsMatch.matchKey] = newEntry;
 
     // Recalcular puntos de todos los participantes
     const batch = db.batch();

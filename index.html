@@ -573,29 +573,28 @@
       const finishedHTML = sorted.map(sec => `
         <div class="results-week-block">
           <div class="results-week-title"><i class="fa-solid fa-calendar-days" style="margin-right:6px"></i>${sec}</div>
-          ${groups[sec].map(m => {
-            const homeWin = m.result === "home";
-            const awayWin = m.result === "away";
-            const isDraw  = m.result === "draw";
-            return `
-              <div class="result-card">
-                <div class="result-card-teams">
-                  <div class="result-team ${homeWin ? "winner" : ""}">
-                    <span class="result-flag">${flag(m.homeTeam)}</span>
-                    <span class="result-team-name">${escHtml(m.homeTeam)}</span>
+          <div class="results-grid">
+            ${groups[sec].map(m => {
+              const homeWin = m.result === "home";
+              const awayWin = m.result === "away";
+              const isDraw  = m.result === "draw";
+              return `
+                <div class="result-card-mini">
+                  <div class="mini-flags">
+                    <span class="mini-flag">${flag(m.homeTeam)}</span>
+                    <span class="mini-score">${m.homeScore}-${m.awayScore}</span>
+                    <span class="mini-flag">${flag(m.awayTeam)}</span>
                   </div>
-                  <div style="text-align:center;flex-shrink:0">
-                    <div class="result-score">${m.homeScore} - ${m.awayScore}</div>
-                    ${isDraw ? `<div class="result-draw-badge">Empate</div>` : ""}
-                    <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;letter-spacing:0.5px">Finalizado</div>
+                  <div class="mini-teams">
+                    <span class="mini-name ${homeWin ? "winner" : ""}">${escHtml(m.homeTeam)}</span>
+                    <span class="mini-name ${awayWin ? "winner" : ""}" style="text-align:right">${escHtml(m.awayTeam)}</span>
                   </div>
-                  <div class="result-team away-team ${awayWin ? "winner" : ""}">
-                    <span class="result-team-name">${escHtml(m.awayTeam)}</span>
-                    <span class="result-flag">${flag(m.awayTeam)}</span>
-                  </div>
-                </div>
-              </div>`;
-          }).join("")}
+                  ${isDraw
+                    ? `<div class="mini-draw">Empate</div>`
+                    : `<div class="mini-status">Finalizado</div>`}
+                </div>`;
+            }).join("")}
+          </div>
         </div>`).join("");
 
       container.innerHTML = liveHTML + finishedHTML;

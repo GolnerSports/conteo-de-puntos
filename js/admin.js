@@ -108,47 +108,86 @@ let allMatches       = [];
 
 // ── TEAM NAME NORMALIZATION (usado en import preview y save) ────
 const TEAM_ALIASES = {
-  "rep checa":      "republica checa",
-  "rep. checa":     "republica checa",
-  "bosnia herz":    "bosnia herzegovina",
-  "bosnia herz.":   "bosnia herzegovina",
-  "rd congo":       "republica democratica del congo",
-  "r.d. congo":     "republica democratica del congo",
-  "ee.uu.":         "estados unidos",
-  "ee uu":          "estados unidos",
-  "usa":            "estados unidos",
-  "corea sur":      "corea del sur",
-  "corea norte":    "corea del norte",
-  "arabia saudita": "arabia saudi",
-  "n. zelanda":     "nueva zelanda",
-  "n zelanda":      "nueva zelanda",
-  "irlanda norte":  "irlanda del norte",
-  // Nombres en inglés vs español
-  "brazil":         "brasil",
-  "germany":        "alemania",
-  "france":         "francia",
-  "spain":          "espana",
-  "england":        "inglaterra",
-  "netherlands":    "paises bajos",
-  "switzerland":    "suiza",
-  "sweden":         "suecia",
-  "denmark":        "dinamarca",
-  "norway":         "noruega",
-  "portugal":       "portugal",
-  "argentina":      "argentina",
-  "colombia":       "colombia",
-  "morocco":        "marruecos",
-  "senegal":        "senegal",
-  "japan":          "japon",
-  "south korea":    "corea del sur",
-  "iran":           "iran",
-  "australia":      "australia",
-  "saudi arabia":   "arabia saudi",
-  "ecuador":        "ecuador",
-  "ghana":          "ghana",
-  "cameroon":       "camerun",
-  "tunisia":        "tunez",
-  "nigeria":        "nigeria",
+  // ── Abreviaciones en español ──
+  "rep checa":             "republica checa",
+  "rep. checa":            "republica checa",
+  "chequia":               "republica checa",   // variante alternativa
+  "bosnia herz":           "bosnia herzegovina",
+  "bosnia herz.":          "bosnia herzegovina",
+  "bosnia-herzegovina":    "bosnia herzegovina",
+  "bosnia and herzegovina":"bosnia herzegovina",
+  "rd congo":              "rd congo",
+  "r.d. congo":            "rd congo",
+  "republica democratica del congo": "rd congo",
+  "ee.uu.":                "estados unidos",
+  "ee uu":                 "estados unidos",
+  "ee.uu":                 "estados unidos",
+  "usa":                   "estados unidos",
+  "eeuu":                  "estados unidos",
+  "corea sur":             "corea del sur",
+  "corea norte":           "corea del norte",
+  "n. zelanda":            "nueva zelanda",
+  "n zelanda":             "nueva zelanda",
+  "irlanda norte":         "irlanda del norte",
+  "cabo de verde":         "cabo verde",
+  "arabia saudi":          "arabia saudita",
+  "catar":                 "catar",             // Qatar en español
+  // ── Nombres en inglés ──
+  "united states":         "estados unidos",
+  "u.s.":                  "estados unidos",
+  "brazil":                "brasil",
+  "germany":               "alemania",
+  "france":                "francia",
+  "spain":                 "espana",
+  "england":               "inglaterra",
+  "netherlands":           "paises bajos",
+  "holland":               "paises bajos",
+  "switzerland":           "suiza",
+  "sweden":                "suecia",
+  "denmark":               "dinamarca",
+  "norway":                "noruega",
+  "portugal":              "portugal",
+  "argentina":             "argentina",
+  "colombia":              "colombia",
+  "morocco":               "marruecos",
+  "senegal":               "senegal",
+  "japan":                 "japon",
+  "south korea":           "corea del sur",
+  "korea republic":        "corea del sur",
+  "iran":                  "iran",
+  "australia":             "australia",
+  "saudi arabia":          "arabia saudita",
+  "ecuador":               "ecuador",
+  "ghana":                 "ghana",
+  "cameroon":              "camerun",
+  "tunisia":               "tunez",
+  "nigeria":               "nigeria",
+  "ivory coast":           "costa de marfil",
+  "cote d'ivoire":         "costa de marfil",
+  "south africa":          "sudafrica",
+  "dr congo":              "rd congo",
+  "congo dr":              "rd congo",
+  "turkiye":               "turquia",
+  "turkey":                "turquia",
+  "algeria":               "argelia",
+  "belgium":               "belgica",
+  "egypt":                 "egipto",
+  "cape verde":            "cabo verde",
+  "curacao":               "curazao",
+  "jordan":                "jordania",
+  "scotland":              "escocia",
+  "haiti":                 "haiti",
+  "iraq":                  "irak",
+  "new zealand":           "nueva zelanda",
+  "panama":                "panama",
+  "croatia":               "croacia",
+  "uzbekistan":            "uzbekistan",
+  "mexico":                "mexico",
+  "canada":                "canada",
+  "uruguay":               "uruguay",
+  "paraguay":              "paraguay",
+  "czechia":               "republica checa",
+  "czech republic":        "republica checa",
 };
 const normTeam = t => {
   const s = (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/gi,"").toLowerCase().trim();
@@ -308,19 +347,59 @@ document.getElementById("parseBtn").addEventListener("click", () => {
 
   parsedData = GolnerParser.parse(text);
 
-  // Buscar si ya existe en el sistema
+  // Buscar SOLO por ID Golner — nunca por nombre (puede haber participantes con el mismo nombre)
   const existing = parsedData.golnerId
     ? allParticipants.find(p => (p.golnerId || "").toUpperCase() === parsedData.golnerId)
-    : allParticipants.find(p => (p.name || "").toLowerCase().trim() === parsedData.name.toLowerCase().trim());
+    : null;
 
-  // Mostrar badge de estado en el preview
-  const statusBadge = existing
-    ? `<div style="margin:8px 0 4px;padding:6px 12px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3);border-radius:6px;font-size:12px;color:#39FF14;display:flex;align-items:center;gap:6px">
-        <i class="fa-solid fa-rotate"></i> Participante existente — se actualizarán sus predicciones
-       </div>`
-    : `<div style="margin:8px 0 4px;padding:6px 12px;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);border-radius:6px;font-size:12px;color:#ffaa00;display:flex;align-items:center;gap:6px">
-        <i class="fa-solid fa-user-plus"></i> Participante nuevo — se registrará por primera vez
-       </div>`;
+  // ── Tarjeta de confirmación de identidad ──
+  const idDetectado   = parsedData.golnerId || "—";
+  const nombreDetect  = parsedData.name     || "—";
+  const nombreSistema = existing ? existing.name              : "—";
+  const idSistema     = existing ? (existing.golnerId || "Sin ID") : "—";
+
+  const matchOk = existing && (
+    (parsedData.golnerId && (existing.golnerId || "").toUpperCase() === parsedData.golnerId)
+  );
+  const matchNombre = existing && !matchOk; // encontrado solo por nombre
+
+  const identityCard = `
+    <div style="margin:0 0 10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)">
+      <div style="padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+                  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4)">
+        Verificación de identidad
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,0.07)">
+        <div style="padding:12px 14px;border-right:1px solid rgba(255,255,255,0.07)">
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:6px;letter-spacing:0.5px">MENSAJE RECIBIDO</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:3px">ID: <span style="color:#fff;font-weight:700">${idDetectado}</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5)">Nombre: <span style="color:#fff;font-weight:600">${nombreDetect}</span></div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:6px;letter-spacing:0.5px">PARTICIPANTE EN SISTEMA</div>
+          ${existing ? `
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:3px">ID: <span style="color:#39FF14;font-weight:700">${idSistema}</span></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5)">Nombre: <span style="color:#39FF14;font-weight:600">${nombreSistema}</span></div>
+          ` : `
+            <div style="font-size:12px;color:#ffaa00;font-weight:600;margin-top:4px">No encontrado</div>
+          `}
+        </div>
+      </div>
+      <div style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.07);
+                  ${existing ? "background:rgba(57,255,20,0.06)" : "background:rgba(255,170,0,0.06)"}">
+        ${existing
+          ? `<span style="font-size:11px;color:#39FF14;font-weight:600">
+               <i class="fa-solid fa-circle-check" style="margin-right:5px"></i>
+               ${matchOk ? "Vinculado por ID — se actualizarán sus predicciones" : "Vinculado por nombre — se actualizarán sus predicciones y se guardará el ID"}
+             </span>`
+          : `<span style="font-size:11px;color:#ffaa00;font-weight:600">
+               <i class="fa-solid fa-user-plus" style="margin-right:5px"></i>
+               Participante nuevo — se registrará por primera vez
+             </span>`
+        }
+      </div>
+    </div>`;
+  const statusBadge = identityCard;
 
 
   // Agrupar predicciones por semana para el preview
@@ -370,8 +449,9 @@ document.getElementById("parseBtn").addEventListener("click", () => {
     warnEl.style.display = "none";
   }
 
-  // Enable save button
-  document.getElementById("saveParticipantBtn").disabled = parsedData.predictions.length === 0;
+  // Habilitar guardar solo si hay ID detectado (sin ID no se puede vincular correctamente)
+  const canSave = parsedData.predictions.length > 0 && !!parsedData.golnerId;
+  document.getElementById("saveParticipantBtn").disabled = !canSave;
   } catch(err) {
     showToast("Error: " + err.message, "error");
     document.getElementById("parserPreview").innerHTML = `<div style="color:#ef4444;padding:12px;font-size:13px">❌ Error: ${err.message}</div>`;
@@ -408,10 +488,10 @@ document.getElementById("saveParticipantBtn").addEventListener("click", async ()
  * Guarda o actualiza un participante en Firestore y calcula sus puntos.
  */
 async function saveParticipant(parsed) {
-  // Buscar si ya existe: primero por ID Golner, si no por nombre
+  // Buscar SOLO por ID Golner — nunca por nombre
   const existing = parsed.golnerId
     ? allParticipants.find(p => (p.golnerId || "").toUpperCase() === parsed.golnerId)
-    : allParticipants.find(p => (p.name || "").toLowerCase().trim() === parsed.name.toLowerCase().trim());
+    : null;
 
   // Construir mapa de matchKey → match de Firestore (para enriquecer con week/phase)
   const matchByKey = {};
@@ -450,9 +530,11 @@ async function saveParticipant(parsed) {
     GolnerScoring.calcParticipantTotal(allPredsList, allResults);
 
   const participantData = {
-    name:            parsed.name,
-    golnerId:        parsed.golnerId || null,
-    phone:           parsed.phone   || null,
+    // Si ya existe, conservar el nombre original — solo actualizar si es nuevo
+    name:            existing ? existing.name : parsed.name,
+    // Si el participante no tenía ID, aprovechar para guardarlo ahora
+    golnerId:        existing?.golnerId || parsed.golnerId || null,
+    phone:           existing ? (existing.phone || null) : (parsed.phone || null),
     totalPoints,
     weekPoints,
     phasePoints,
