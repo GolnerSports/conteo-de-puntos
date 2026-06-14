@@ -463,24 +463,62 @@
       return { cls: "", badge: "active", label: "Activo" };
     }
 
-    // ── RENDER RESULTS VIEW (agrupado por semana/fase) ──────────
+    // ── RENDER RESULTS VIEW (pestañas por semana/fase) ──────────
+    let activeResultsTab = null;
+
+    const SECTION_ORDER = ["Semana 1","Semana 2","Semana 3",
+      "Dieciseisavos","Octavos","Cuartos","Semifinal","Final"];
+    const PHASE_MAP = {
+      groups: null, round_of_16: "Dieciseisavos",
+      round_of_8: "Octavos", quarter_final: "Cuartos",
+      semi_final: "Semifinal", final: "Final"
+    };
+
+    function miniCard(m) {
+      const homeWin = m.result === "home";
+      const awayWin = m.result === "away";
+      const isDraw  = m.result === "draw";
+      return `
+        <div class="result-card-mini">
+          <div class="mini-flags">
+            <span class="mini-flag">${flag(m.homeTeam)}</span>
+            <span class="mini-score">${m.homeScore}-${m.awayScore}</span>
+            <span class="mini-flag">${flag(m.awayTeam)}</span>
+          </div>
+          <div class="mini-teams">
+            <span class="mini-name ${homeWin ? "winner" : ""}">${escHtml(m.homeTeam)}</span>
+            <span class="mini-name ${awayWin ? "winner" : ""}" style="text-align:right">${escHtml(m.awayTeam)}</span>
+          </div>
+          ${isDraw ? `<div class="mini-draw">Empate</div>` : `<div class="mini-status">Finalizado</div>`}
+        </div>`;
+    }
+
     function renderResultsView() {
       const container = document.getElementById("resultsGrouped");
       if (!container) return;
 
-      // Enriquecer con datos ESPN en vivo
-      const espnLive = Object.values(espnLiveScores).filter(e => e.status === "in");
-      const liveMatches  = allMatchesData.filter(m => m.live && !m.played).map(m => {
-        const key = buildMatchKeyLocal(m.homeTeam, m.awayTeam);
+      // Partidos en vivo
+      const liveMatches = allMatchesData.filter(m => m.live && !m.played).map(m => {
+        const key  = buildMatchKeyLocal(m.homeTeam, m.awayTeam);
         const espn = espnLiveScores[key];
-        if (espn) {
-          return { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock };
-        }
-        return m;
+        return espn ? { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock } : m;
       });
-      const played       = allMatchesData.filter(m => m.played);
 
-      if (!liveMatches.length && !played.length) {
+      // Partidos finalizados agrupados por pestaña
+      const groups = {};
+      for (const m of allMatchesData.filter(m => m.played)) {
+        const tab = m.phase === "groups"
+          ? `Semana ${m.week || 1}`
+          : (PHASE_MAP[m.phase] || m.phase);
+        if (!groups[tab]) groups[tab] = [];
+        groups[tab].push(m);
+      }
+      const tabs = Object.keys(groups).sort((a,b) => {
+        const ia = SECTION_ORDER.indexOf(a), ib = SECTION_ORDER.indexOf(b);
+        return (ia===-1?99:ia)-(ib===-1?99:ib);
+      });
+
+      if (!liveMatches.length && !tabs.length) {
         container.innerHTML = `
           <div class="results-empty">
             <i class="fa-solid fa-futbol"></i>
@@ -489,12 +527,16 @@
         return;
       }
 
-      // ── Partidos en vivo ──
+      // Pestaña activa: mantener selección si sigue existiendo, si no → la más reciente
+      if (!activeResultsTab || !tabs.includes(activeResultsTab)) {
+        activeResultsTab = tabs[tabs.length - 1] || null;
+      }
+
+      // HTML partido en vivo (siempre arriba, fuera de pestañas)
       const liveHTML = liveMatches.length ? `
-        <div class="results-week-block">
-          <div class="results-week-title" style="color:#ef4444">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:8px;animation:pulse 1.2s infinite"></span>
-            En Vivo
+        <div class="results-live-block">
+          <div class="results-live-label">
+            <span class="live-dot"></span> En Vivo
           </div>
           ${liveMatches.map(m => `
             <div class="result-card" style="border-color:#39ff14;background:rgba(57,255,20,0.06)">
@@ -515,57 +557,30 @@
             </div>`).join("")}
         </div>` : "";
 
-      // ── Partidos finalizados ──
-      const sectionOrder = ["Semana 1","Semana 2","Semana 3",
-        "Dieciseisavos","Octavos","Cuartos","Semifinal","Final"];
-      const phaseMap = {
-        groups:"", round_of_16:"Dieciseisavos",
-        round_of_8:"Octavos", quarter_final:"Cuartos",
-        semi_final:"Semifinal", final:"Final"
-      };
+      // HTML barra de pestañas
+      const tabBar = tabs.length ? `
+        <div class="results-tab-bar">
+          ${tabs.map(t => `
+            <button class="results-tab ${t === activeResultsTab ? "active" : ""}" data-tab="${escHtml(t)}">
+              ${escHtml(t)}
+            </button>`).join("")}
+        </div>` : "";
 
-      const groups = {};
-      for (const m of played) {
-        const key = m.phase === "groups"
-          ? `Semana ${m.week || 1}`
-          : (phaseMap[m.phase] || m.phase);
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(m);
-      }
+      // HTML contenido de pestaña activa
+      const tabContent = activeResultsTab && groups[activeResultsTab] ? `
+        <div class="results-grid" style="padding:12px 16px">
+          ${groups[activeResultsTab].map(miniCard).join("")}
+        </div>` : "";
 
-      const sorted = Object.keys(groups).sort((a,b) => {
-        const ia = sectionOrder.indexOf(a), ib = sectionOrder.indexOf(b);
-        return (ia===-1?99:ia)-(ib===-1?99:ib);
+      container.innerHTML = liveHTML + tabBar + tabContent;
+
+      // Listeners de pestañas
+      container.querySelectorAll(".results-tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeResultsTab = btn.dataset.tab;
+          renderResultsView();
+        });
       });
-
-      const finishedHTML = sorted.map(sec => `
-        <div class="results-week-block">
-          <div class="results-week-title"><i class="fa-solid fa-calendar-days" style="margin-right:6px"></i>${sec}</div>
-          <div class="results-grid">
-            ${groups[sec].map(m => {
-              const homeWin = m.result === "home";
-              const awayWin = m.result === "away";
-              const isDraw  = m.result === "draw";
-              return `
-                <div class="result-card-mini">
-                  <div class="mini-flags">
-                    <span class="mini-flag">${flag(m.homeTeam)}</span>
-                    <span class="mini-score">${m.homeScore}-${m.awayScore}</span>
-                    <span class="mini-flag">${flag(m.awayTeam)}</span>
-                  </div>
-                  <div class="mini-teams">
-                    <span class="mini-name ${homeWin ? "winner" : ""}">${escHtml(m.homeTeam)}</span>
-                    <span class="mini-name ${awayWin ? "winner" : ""}" style="text-align:right">${escHtml(m.awayTeam)}</span>
-                  </div>
-                  ${isDraw
-                    ? `<div class="mini-draw">Empate</div>`
-                    : `<div class="mini-status">Finalizado</div>`}
-                </div>`;
-            }).join("")}
-          </div>
-        </div>`).join("");
-
-      container.innerHTML = liveHTML + finishedHTML;
     }
 
     // ── PUBLIC BOTTOM NAV ─────────────────────────────────────────
