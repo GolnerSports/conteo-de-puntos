@@ -308,6 +308,22 @@ async function main() {
 
   if (!newlyFinished.length) {
     console.log("✅ Todos los partidos terminados ya están finalizados.");
+    // Recalcular puntos aunque no haya partidos nuevos (corrige errores de matchKey)
+    if (Object.keys(allResults).length > 0) {
+      console.log("🔄 Recalculando puntos de todos los participantes...");
+      const batch = db.batch();
+      for (const p of allParticipants) {
+        const preds = Object.values(p.predictions || {});
+        const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
+        batch.update(db.collection("participants").doc(p.id), {
+          totalPoints, weekPoints, phasePoints, matchBreakdown,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      await withRetry(() => batch.commit());
+      console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
+      invalidateCache();
+    }
     return;
   }
 
