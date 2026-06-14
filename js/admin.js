@@ -1426,10 +1426,23 @@ function renderStats() {
   const matchHits    = {};
   const matchTotals  = {};
 
+  // Construir índice de matchKey canónico → partido real
+  // para resolver desfases (ej: "chequia" vs "republica checa" para el mismo partido)
+  const canonicalMap = {};
+  for (const am of allMatches) {
+    if (!am.matchKey) continue;
+    const normKey = buildMatchKey(am.homeTeam || "", am.awayTeam || "");
+    canonicalMap[am.matchKey] = am.matchKey;
+    if (normKey !== am.matchKey) canonicalMap[normKey] = am.matchKey;
+  }
+
   for (const p of allParticipants) {
     for (const m of (p.matchBreakdown || [])) {
-      matchHits[m.matchKey]   = (matchHits[m.matchKey]   || 0) + (m.hitWinner ? 1 : 0);
-      matchTotals[m.matchKey] = (matchTotals[m.matchKey] || 0) + 1;
+      // Usar la clave canónica del partido para evitar duplicados
+      const normKey  = buildMatchKey(m.homeTeam || "", m.awayTeam || "");
+      const canonical = canonicalMap[m.matchKey] || canonicalMap[normKey] || m.matchKey;
+      matchHits[canonical]   = (matchHits[canonical]   || 0) + (m.hitWinner ? 1 : 0);
+      matchTotals[canonical] = (matchTotals[canonical] || 0) + 1;
     }
   }
 
