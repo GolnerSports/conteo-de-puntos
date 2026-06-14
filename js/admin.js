@@ -1478,7 +1478,19 @@ window.openParticipantDrawer = (id) => {
 
   // Played matches (have breakdown entry with points)
   const breakdown = p.matchBreakdown || [];
-  const playedKeys = new Set(breakdown.map(m => m.matchKey));
+  // Construir set de matchKeys jugados incluyendo variantes normalizadas
+  const playedKeys = new Set();
+  for (const m of breakdown) {
+    playedKeys.add(m.matchKey);
+    // También agregar variante normalizada (quita puntos, aplica aliases)
+    if (m.homeTeam && m.awayTeam) {
+      const normKey = normTeam(m.homeTeam).replace(/\s+/g,"_") + "_vs_" + normTeam(m.awayTeam).replace(/\s+/g,"_");
+      playedKeys.add(normKey);
+      // Y variante sin underscores en el nombre
+      const spaceKey = normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam);
+      playedKeys.add(spaceKey);
+    }
+  }
 
   for (const m of breakdown) {
     const key = m.phase === "groups"
@@ -1490,7 +1502,11 @@ window.openParticipantDrawer = (id) => {
 
   // Pending predictions — cross-reference allMatches for week/phase
   for (const [matchKey, pred] of Object.entries(p.predictions || {})) {
-    if (playedKeys.has(matchKey)) continue;
+    // Verificar si ya está jugado (incluyendo variantes normalizadas del matchKey)
+    const normMatchKey = pred.homeTeam && pred.awayTeam
+      ? normTeam(pred.homeTeam) + "_vs_" + normTeam(pred.awayTeam)
+      : matchKey;
+    if (playedKeys.has(matchKey) || playedKeys.has(normMatchKey)) continue;
     const match = matchByKey[matchKey] || fuzzyFindInMatches({ ...pred, matchKey }, allMatches);
     // Usar week/phase del partido en Firestore, o del campo guardado en la predicción
     const phase = match?.phase || pred.phase || "groups";
