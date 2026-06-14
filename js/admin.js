@@ -848,8 +848,9 @@ window.finalizeMatch = async (id) => {
   const result    = homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
   const matchKey  = buildMatchKey(match.homeTeam, match.awayTeam);
 
+  // NO incluir matchKey en el update para no sobreescribir la clave original de Firestore
   await updateDoc(doc(db, "matches", id), {
-    live: false, played: true, result, homeScore, awayScore, matchKey, playedAt: serverTimestamp()
+    live: false, played: true, result, homeScore, awayScore, playedAt: serverTimestamp()
   });
 
   allResults[matchKey] = {
@@ -958,7 +959,10 @@ window.deleteResult = (id, home, away) => {
 
       // Quitar del mapa en memoria y recalcular
       const match = allMatches.find(m => m.id === id);
-      if (match) delete allResults[buildMatchKey(match.homeTeam, match.awayTeam)];
+      if (match) {
+        delete allResults[buildMatchKey(match.homeTeam, match.awayTeam)];
+        if (match.matchKey) delete allResults[match.matchKey];
+      }
 
       const batch = writeBatch(db);
       for (const p of allParticipants) {
@@ -1293,11 +1297,11 @@ function openCutPreview() {
   // Ordenar por puntos → marcadores exactos → aciertos (criterios de desempate)
   const sorted = allParticipants.slice().sort((a, b) => {
     if ((b.totalPoints || 0) !== (a.totalPoints || 0)) return (b.totalPoints || 0) - (a.totalPoints || 0);
-    const aExact = Object.values(a.matchBreakdown || {}).filter(x => x === 3).length;
-    const bExact = Object.values(b.matchBreakdown || {}).filter(x => x === 3).length;
+    const aExact = (a.matchBreakdown || []).filter(m => m.hitScore).length;
+    const bExact = (b.matchBreakdown || []).filter(m => m.hitScore).length;
     if (bExact !== aExact) return bExact - aExact;
-    const aHits = Object.values(a.matchBreakdown || {}).filter(x => x > 0).length;
-    const bHits = Object.values(b.matchBreakdown || {}).filter(x => x > 0).length;
+    const aHits = (a.matchBreakdown || []).filter(m => m.hitWinner).length;
+    const bHits = (b.matchBreakdown || []).filter(m => m.hitWinner).length;
     return bHits - aHits;
   });
 
@@ -1475,7 +1479,7 @@ onSnapshot(collection(db, "matches"), snap => {
   snap.docs.forEach(d => {
     const m = d.data();
     if (m.played && m.matchKey) {
-      allResults[m.matchKey] = {
+      const entry = {
         played:   true,
         result:   m.result,
         homeScore: m.homeScore,
@@ -1485,6 +1489,11 @@ onSnapshot(collection(db, "matches"), snap => {
         week:      m.week,
         phase:     m.phase || "groups"
       };
+      // Indexar por clave almacenada en Firestore
+      allResults[m.matchKey] = entry;
+      // Indexar también por variante normalizada (resuelve desfases de nombres)
+      const normKey = buildMatchKey(m.homeTeam || "", m.awayTeam || "");
+      if (normKey && normKey !== m.matchKey) allResults[normKey] = entry;
     }
   });
 });
@@ -1922,7 +1931,8 @@ async function checkWeeklyReminders() {
       if (!weekMatches.length) continue;
 
       // Primer partido de la semana (ya están ordenados por fecha)
-      const firstDate = new Date(weekMatches[0].date).getTime();
+      const rawDate   = weekMatches[0].date;
+      const firstDate = (rawDate?.toDate ? rawDate.toDate() : new Date(rawDate)).getTime();
       const reminderTime = firstDate - WINDOW_MS;
       const reminderKey  = `week_${week}`;
 

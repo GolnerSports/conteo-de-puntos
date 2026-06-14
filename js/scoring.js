@@ -85,10 +85,15 @@ const GolnerScoring = (() => {
     const matchBreakdown = [];
     let totalPoints = 0;
 
-    // Crear mapa de predicciones por matchKey
+    // Crear mapa de predicciones con triple-indexación para máxima cobertura:
+    // 1. Por matchKey interno del objeto predicción
+    // 2. Por clave normalizada (homeTeam_vs_awayTeam sin acentos)
     const predMap = {};
+    const normStr = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
     for (const p of predictions) {
-      predMap[p.matchKey] = p;
+      if (p.matchKey) predMap[p.matchKey] = p;
+      const normKey = normStr(p.homeTeam||"") + "_vs_" + normStr(p.awayTeam||"");
+      if (normKey && normKey !== p.matchKey) predMap[normKey] = p;
     }
 
     // Iterar sobre resultados reales (deduplicando por homeTeam+awayTeam)
@@ -101,7 +106,8 @@ const GolnerScoring = (() => {
       if (seenMatches.has(dedupeKey)) continue;
       seenMatches.add(dedupeKey);
 
-      const pred = predMap[matchKey] || { prediction: null, homeScore: null, awayScore: null };
+      const altKey = normStr(real.homeTeam||"") + "_vs_" + normStr(real.awayTeam||"");
+      const pred = predMap[matchKey] || predMap[altKey] || { prediction: null, homeScore: null, awayScore: null };
       const pts  = calcMatchPoints(pred, real);
 
       totalPoints += pts.total;
@@ -227,4 +233,4 @@ const GolnerScoring = (() => {
 })();
 
 if (typeof module !== "undefined") module.exports = GolnerScoring;
-window.GolnerScoring = GolnerScoring;
+if (typeof window !== "undefined") window.GolnerScoring = GolnerScoring;
