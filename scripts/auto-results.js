@@ -145,7 +145,7 @@ const ESPN_NAME_MAP = {
   "iran":                   "iran",
   "iraq":                   "irak",
   "austria":                "austria",
-  "qatar":                  "catar",
+  "qatar":                  "qatar",   // Firestore almacena "qatar" (no "catar")
   "new zealand":            "nueva zelanda",
   "panama":                 "panama",
   "croatia":                "croacia",
@@ -505,12 +505,13 @@ async function main() {
 
     const result = espn.homeScore > espn.awayScore ? "home" : espn.awayScore > espn.homeScore ? "away" : "draw";
 
-    // Actualizar partido en Firestore
+    // Actualizar partido en Firestore — NO sobreescribir matchKey original
+    // para no romper las búsquedas de predicciones que usan el matchKey guardado
     await withRetry(() =>
       db.collection("matches").doc(fsMatch.id).update({
         live: false, played: true, finalized: true,
         result, homeScore: espn.homeScore, awayScore: espn.awayScore,
-        matchKey, autoUpdated: true, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        autoUpdated: true, updatedAt: admin.firestore.FieldValue.serverTimestamp()
       })
     );
     console.log(`  ✅ Partido actualizado`);
