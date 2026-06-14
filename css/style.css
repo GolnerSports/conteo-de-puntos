@@ -512,8 +512,19 @@ input, select, textarea {
 /* ════════════════════════════════════════════════════════════
    PUBLIC BOTTOM NAV + VIEWS
    ════════════════════════════════════════════════════════════ */
-.pub-view { display: none; }
-.pub-view.active { display: block; }
+.pub-view {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  transition: opacity 0.22s ease;
+}
+.pub-view.active {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+}
 
 /* Cuando la vista de resultados está activa, ocultar hero y stats */
 body.view-resultados-active .hero,
