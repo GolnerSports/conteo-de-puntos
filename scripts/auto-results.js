@@ -210,8 +210,14 @@ function calcParticipantTotal(predictions, allResults) {
     if (normKey && normKey !== mk && normKey !== dictKey) predMap[normKey] = { ...p, matchKey: mk };
   }
 
+  // Deduplicar: allResults puede tener el mismo partido con dos claves distintas
+  const seenMatches = new Set();
   for (const [matchKey, real] of Object.entries(allResults)) {
     if (!real.played) continue;
+    // Usar homeTeam+awayTeam normalizado como clave única del partido
+    const dedupeKey = buildMatchKey(real.homeTeam || "", real.awayTeam || "");
+    if (seenMatches.has(dedupeKey)) continue;
+    seenMatches.add(dedupeKey);
     // Buscar predicción: exacto, luego normalizado del partido real
     const altKey = buildMatchKey(real.homeTeam || "", real.awayTeam || "");
     const pred = predMap[matchKey] || predMap[altKey] || { prediction: null, homeScore: null, awayScore: null };

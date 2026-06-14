@@ -91,9 +91,15 @@ const GolnerScoring = (() => {
       predMap[p.matchKey] = p;
     }
 
-    // Iterar sobre resultados reales
+    // Iterar sobre resultados reales (deduplicando por homeTeam+awayTeam)
+    const seenMatches = new Set();
     for (const [matchKey, real] of Object.entries(results)) {
       if (!real.played) continue;
+
+      // Deduplicar: mismo partido puede estar indexado con dos claves distintas
+      const dedupeKey = (real.homeTeam || "") + "_vs_" + (real.awayTeam || "");
+      if (seenMatches.has(dedupeKey)) continue;
+      seenMatches.add(dedupeKey);
 
       const pred = predMap[matchKey] || { prediction: null, homeScore: null, awayScore: null };
       const pts  = calcMatchPoints(pred, real);
