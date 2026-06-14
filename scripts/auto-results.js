@@ -308,14 +308,25 @@ async function main() {
     return fsMatch && !(fsMatch.played && fsMatch.finalized);
   });
 
+  // 4. Construir mapa de resultados actuales
+  const allResults = {};
+  for (const m of allMatches) {
+    if (m.played && m.matchKey) {
+      allResults[m.matchKey] = {
+        played: true, result: m.result,
+        homeScore: m.homeScore, awayScore: m.awayScore,
+        homeTeam: m.homeTeam, awayTeam: m.awayTeam,
+        week: m.week, phase: m.phase || "groups"
+      };
+    }
+  }
+
   if (!newlyFinished.length) {
     console.log("✅ Todos los partidos terminados ya están finalizados.");
-    // Recalcular puntos aunque no haya partidos nuevos (corrige errores de matchKey)
     if (Object.keys(allResults).length > 0) {
       console.log("🔄 Recalculando puntos de todos los participantes...");
       const batch = db.batch();
       for (const p of allParticipants) {
-        
         const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
         batch.update(db.collection("participants").doc(p.id), {
           totalPoints, weekPoints, phasePoints, matchBreakdown,
@@ -329,21 +340,7 @@ async function main() {
     return;
   }
 
-
   console.log(`🆕 ${newlyFinished.length} partido(s) nuevos para procesar`);
-
-  // 4. Construir mapa de resultados actuales
-  const allResults = {};
-  for (const m of allMatches) {
-    if (m.played && m.matchKey) {
-      allResults[m.matchKey] = {
-        played: true, result: m.result,
-        homeScore: m.homeScore, awayScore: m.awayScore,
-        homeTeam: m.homeTeam, awayTeam: m.awayTeam,
-        week: m.week, phase: m.phase || "groups"
-      };
-    }
-  }
 
   // 5. Procesar cada partido terminado
   let anyUpdated = false;
