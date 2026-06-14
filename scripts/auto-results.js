@@ -399,8 +399,25 @@ async function main() {
     );
   }
 
-  // Invalidar caché para que el próximo run lea datos frescos
-  if (anyUpdated) invalidateCache();
+  // Si no hubo partidos nuevos pero hay partidos jugados, recalcular todos los participantes
+  // (esto corrige casos donde el matchKey cambió o hubo errores previos)
+  if (!anyUpdated && Object.keys(allResults).length > 0) {
+    console.log("🔄 Recalculando puntos de todos los participantes...");
+    const batch = db.batch();
+    for (const p of allParticipants) {
+      const preds = Object.values(p.predictions || {});
+      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
+      batch.update(db.collection("participants").doc(p.id), {
+        totalPoints, weekPoints, phasePoints, matchBreakdown,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    await withRetry(() => batch.commit());
+    console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
+    invalidateCache();
+  } else if (anyUpdated) {
+    invalidateCache();
+  }
 
   console.log("\n🏁 Finalizado.");
 }
