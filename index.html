@@ -175,10 +175,12 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+             collection, onSnapshot, query, orderBy, doc, getDoc, setDoc, serverTimestamp
+           } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
-    // ── FIREBASE CONFIG (replace with your own) ─────────────────
+    // ── FIREBASE CONFIG ──────────────────────────────────────────
     const firebaseConfig = {
       apiKey:            "AIzaSyDBnLbLb-mOHIoS29k-G9hzPj285XG3QeI",
       authDomain:        "conteo-de-puntos-golner-sports.firebaseapp.com",
@@ -189,12 +191,35 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    // Caché persistente: los datos se guardan en el celular → carga instantánea en visitas siguientes
+    const db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
 
     // ── STATE ────────────────────────────────────────────────────
     let allParticipants = [];
     let currentFilter   = "all";
     let tournamentConfig = { phase: "groups", week: 1, cutoffPct: 0.4, showCutLine: true };
+    let dataLoaded = false;
+
+    // Timeout: si en 12 segundos no llegan datos, mostrar botón de recargar
+    const loadTimeout = setTimeout(() => {
+      if (!dataLoaded) {
+        const body = document.getElementById("leaderboardBody");
+        if (body) body.innerHTML = `
+          <div style="text-align:center;padding:48px 20px">
+            <div style="font-size:36px;margin-bottom:12px">📡</div>
+            <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:20px">
+              La conexión está tardando más de lo normal
+            </div>
+            <button onclick="location.reload()"
+              style="background:#39FF14;color:#000;border:none;padding:12px 28px;
+                     border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
+              Recargar
+            </button>
+          </div>`;
+      }
+    }, 12000);
 
     // ── REAL-TIME LISTENERS ──────────────────────────────────────
 
@@ -215,6 +240,7 @@
         return (b.exactScores || 0) - (a.exactScores || 0);
       });
       allParticipants = raw.map((p, i) => ({ ...p, rank: i + 1 }));
+      if (!dataLoaded) { dataLoaded = true; clearTimeout(loadTimeout); }
       updateStatsBar();
       renderLeaderboard();
     });
