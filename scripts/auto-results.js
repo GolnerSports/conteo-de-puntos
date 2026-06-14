@@ -259,24 +259,47 @@ const LIVE_STATUSES = new Set([
   "STATUS_RAIN_DELAY",
 ]);
 
-async function fetchESPNMatches() {
-  // Hora México UTC-6
-  const now  = new Date(Date.now() - 6 * 60 * 60 * 1000);
-  const yyyy = now.getUTCFullYear();
-  const mm   = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const dd   = String(now.getUTCDate()).padStart(2, "0");
-  const url  = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${yyyy}${mm}${dd}`;
-  console.log(`📡 ESPN: ${url}`);
+function espnDateStr(date) {
+  const yyyy = date.getUTCFullYear();
+  const mm   = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const dd   = String(date.getUTCDate()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}`;
+}
 
-  let data;
-  try {
-    data = await httpGet(url);
-  } catch(e) {
-    console.log(`⚠️ Error al consultar ESPN: ${e.message}. Se omite este ciclo.`);
-    return null; // null = señal de fallo, el llamador lo maneja
+async function fetchESPNMatches() {
+  // Consultar ESPN por DOS fechas: la fecha UTC actual Y la fecha en hora México (UTC-6)
+  // Esto cubre partidos que empiezan después de las 6 PM México (medianoche UTC del día siguiente)
+  const nowUtc = new Date();
+  const nowMex = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  const dateUtc = espnDateStr(nowUtc);
+  const dateMex = espnDateStr(nowMex);
+
+  // Obtener fechas únicas a consultar
+  const datesToFetch = [...new Set([dateUtc, dateMex])];
+  console.log(`📡 ESPN fechas a consultar: ${datesToFetch.join(", ")}`);
+
+  let allEvents = [];
+  for (const dateStr of datesToFetch) {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`;
+    let data;
+    try {
+      data = await httpGet(url);
+    } catch(e) {
+      console.log(`⚠️ Error al consultar ESPN (${dateStr}): ${e.message}. Se omite este ciclo.`);
+      return null;
+    }
+    allEvents.push(...(data.events || []));
   }
 
-  return (data.events || []).map(ev => {
+  // Deduplicar por ID de evento
+  const seen = new Set();
+  const events = allEvents.filter(ev => {
+    if (seen.has(ev.id)) return false;
+    seen.add(ev.id);
+    return true;
+  });
+
+  return events.map(ev => {
     const comp       = ev.competitions?.[0];
     const home       = comp?.competitors?.find(c => c.homeAway === "home");
     const away       = comp?.competitors?.find(c => c.homeAway === "away");
