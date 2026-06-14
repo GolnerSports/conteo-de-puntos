@@ -315,8 +315,8 @@ async function main() {
       console.log("🔄 Recalculando puntos de todos los participantes...");
       const batch = db.batch();
       for (const p of allParticipants) {
-        const preds = Object.values(p.predictions || {});
-        const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
+        
+        const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
         batch.update(db.collection("participants").doc(p.id), {
           totalPoints, weekPoints, phasePoints, matchBreakdown,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -399,8 +399,8 @@ async function main() {
     // Recalcular puntos de todos los participantes
     const batch = db.batch();
     for (const p of allParticipants) {
-      const preds = Object.values(p.predictions || {});
-      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
+      
+      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
       batch.update(db.collection("participants").doc(p.id), {
         totalPoints, weekPoints, phasePoints, matchBreakdown,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -423,8 +423,8 @@ async function main() {
     console.log("🔄 Recalculando puntos de todos los participantes...");
     const batch = db.batch();
     for (const p of allParticipants) {
-      const preds = Object.values(p.predictions || {});
-      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(preds, allResults);
+      
+      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
       batch.update(db.collection("participants").doc(p.id), {
         totalPoints, weekPoints, phasePoints, matchBreakdown,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
