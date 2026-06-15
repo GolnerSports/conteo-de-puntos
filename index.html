@@ -254,8 +254,8 @@
         </button>
       </div>
     </div>
-    <div id="predView-content" style="display:none;padding:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div id="predView-content" style="display:none;padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:16px 16px 0">
         <div>
           <div id="predUserName" style="font-size:18px;font-weight:800"></div>
           <div id="predUserId" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px"></div>
@@ -899,14 +899,14 @@
         : `<span style="color:#ef4444;font-weight:600">0 pts ❌</span>`;
 
       const tabBar = sorted.length > 1 ? `
-        <div class="results-tab-bar" style="margin-bottom:4px">
+        <div class="results-tab-bar" style="margin-bottom:4px;padding:0 16px">
           ${sorted.map(t => `<button class="results-tab ${t === window.activePredTab ? "active" : ""}" data-ptab="${t}">${t}</button>`).join("")}
         </div>` : "";
 
       const activeMatches = window.activePredTab && groups[window.activePredTab] ? groups[window.activePredTab] : [];
 
       const matchCards = activeMatches.map(m => `
-        <div style="background:#0e1410;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+        <div style="background:#0e1410;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);padding:14px 16px;margin-bottom:4px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <span style="font-size:13px;font-weight:700">${m.homeTeam} vs ${m.awayTeam}</span>
             ${pts(m)}
@@ -919,7 +919,7 @@
 
       const container = document.getElementById("predMatchList");
       container.innerHTML = sorted.length
-        ? tabBar + `<div style="padding-top:8px">${matchCards}</div>`
+        ? tabBar + `<div style="padding-top:4px">${matchCards}</div>`
         : `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;font-size:14px">No hay predicciones registradas aún.</div>`;
 
       // Listeners pestañas
