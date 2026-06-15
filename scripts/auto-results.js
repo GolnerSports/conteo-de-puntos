@@ -115,9 +115,10 @@ const ESPN_NAME_MAP = {
   "congo, dr":              "rd congo",
 
   // ── Bosnia Herzegovina ──
-  "bosnia-herzegovina":     "bosnia herzegovina",
-  "bosnia and herzegovina": "bosnia herzegovina",
-  "bosnia & herzegovina":   "bosnia herzegovina",
+  "bosnia-herzegovina":     "bosnia",
+  "bosnia and herzegovina": "bosnia",
+  "bosnia & herzegovina":   "bosnia",
+  "bosnia herzegovina":     "bosnia",
 
   // ── Turquía ──
   "turkiye":                "turquia",
@@ -146,7 +147,7 @@ const ESPN_NAME_MAP = {
   "iran":                   "iran",
   "iraq":                   "irak",
   "austria":                "austria",
-  "qatar":                  "qatar",   // Firestore almacena "qatar" (no "catar")
+  "qatar":                  "catar",
   "new zealand":            "nueva zelanda",
   "panama":                 "panama",
   "croatia":                "croacia",
