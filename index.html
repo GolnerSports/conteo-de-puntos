@@ -804,6 +804,9 @@
       localStorage.removeItem(SESSION_KEY);
       document.getElementById("predView-auth").style.display = "block";
       document.getElementById("predView-content").style.display = "none";
+      // Restaurar header a GOLNER SPORTS
+      document.getElementById("headerBrand").style.display = "flex";
+      document.getElementById("headerUser").style.display  = "none";
     };
 
     window.doAuth = () => {
@@ -830,6 +833,13 @@
       }
 
       saveSession({ id: participant.id, golnerId: participant.golnerId, name: participant.name });
+      // Actualizar header con nuevo participante
+      const initials = participant.name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+      document.getElementById("headerAvatar").textContent   = initials;
+      document.getElementById("headerName").textContent     = participant.name;
+      document.getElementById("headerGolnerId").textContent = participant.golnerId || "";
+      document.getElementById("headerBrand").style.display  = "none";
+      document.getElementById("headerUser").style.display   = "flex";
       renderPredView();
     };
 
