@@ -794,7 +794,13 @@
       });
 
       if (!participant) {
-        errEl.textContent = "ID o teléfono incorrecto. Intenta de nuevo.";
+        const found = allParticipants.find(p => (p.golnerId||"").toUpperCase() === rawId);
+        if (found) {
+          const stored = (found.phone||"").replace(/\D/g,"");
+          errEl.textContent = `Teléfono guardado: "${stored||"(vacío)"}" — Ingresaste: "${phone4}"`;
+        } else {
+          errEl.textContent = `ID "${rawId}" no encontrado.`;
+        }
         errEl.style.display = "block"; return;
       }
 
