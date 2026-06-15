@@ -1308,6 +1308,7 @@
 
     window.closeStatsModal = () => {
       document.getElementById("statsModal").style.display = "none";
+      document.getElementById("statsSheet").style.marginBottom = "0";
       document.body.style.overflow = "";
     };
 
@@ -1601,6 +1602,16 @@
 
     // tap en overlay para cerrar
     modal.addEventListener('click', e => { if(e.target === modal) closeStatsModal(); });
+
+    // Subir el sheet cuando aparece el teclado en mobile
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (modal.style.display === 'flex') {
+          const gap = window.innerHeight - window.visualViewport.height;
+          sheet.style.marginBottom = gap > 50 ? gap + 'px' : '0';
+        }
+      });
+    }
   })();
   </script>
 </body>
