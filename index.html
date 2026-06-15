@@ -1278,7 +1278,7 @@
         .sort((a, b) => b.pct - a.pct);
 
       const rows = accuracy.map(a => `
-        <div style="display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div class="stats-row" data-label="${escStats(a.label)}" style="display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
           <span style="flex:1;font-size:13px;font-weight:600;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escStats(a.label)}</span>
           <div style="width:90px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;flex-shrink:0">
             <div style="width:${a.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
@@ -1293,6 +1293,8 @@
       document.getElementById("statsModalBody").innerHTML = rows ||
         `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
       const sm = document.getElementById("statsModal");
+      const si = document.getElementById("statsSearch");
+      if (si) { si.value = ""; filterStatsRows(""); }
       const ss = document.getElementById("statsSheet");
       ss.style.transition = "none";
       ss.style.transform = "translateY(100%)";
@@ -1310,6 +1312,13 @@
     window.closeStatsModal = () => {
       document.getElementById("statsModal").style.display = "none";
       document.body.style.overflow = "";
+    };
+
+    window.filterStatsRows = (q) => {
+      const term = q.trim().toLowerCase();
+      document.querySelectorAll("#statsModalBody .stats-row").forEach(el => {
+        el.style.display = !term || el.dataset.label.toLowerCase().includes(term) ? "" : "none";
+      });
     };
 
     window.showMatchParticipantsPublic = (matchKey) => {
@@ -1536,6 +1545,15 @@
           <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">Aciertos por partido · Mundial 2026</div>
         </div>
         <button onclick="closeStatsModal()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <!-- Buscador -->
+      <div style="padding:10px 20px 10px">
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border-radius:12px;padding:0 14px;border:1px solid rgba(255,255,255,0.08)">
+          <i class="fa-solid fa-magnifying-glass" style="color:rgba(255,255,255,0.3);font-size:13px"></i>
+          <input id="statsSearch" type="text" placeholder="Buscar partido…"
+            oninput="filterStatsRows(this.value)"
+            style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:14px;padding:11px 0;font-family:inherit">
+        </div>
       </div>
       <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 20px"></div>
       <!-- Body -->
