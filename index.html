@@ -1294,11 +1294,17 @@
         `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
       const sm = document.getElementById("statsModal");
       const ss = document.getElementById("statsSheet");
-      ss.style.transform = "";
-      ss.style.transition = "";
-      sm.style.background = "rgba(0,0,0,0.6)";
+      ss.style.transition = "none";
+      ss.style.transform = "translateY(100%)";
+      sm.style.background = "rgba(0,0,0,0)";
       sm.style.display = "flex";
       document.body.style.overflow = "hidden";
+      // forzar reflow y animar
+      ss.getBoundingClientRect();
+      ss.style.transition = "transform 0.32s cubic-bezier(0.34,1.1,0.64,1)";
+      ss.style.transform = "translateY(0)";
+      sm.style.transition = "background 0.25s";
+      sm.style.background = "rgba(0,0,0,0.6)";
     };
 
     window.closeStatsModal = () => {
