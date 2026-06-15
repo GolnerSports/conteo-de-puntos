@@ -96,7 +96,7 @@
       <div style="display:flex;align-items:center;gap:16px">
         <button id="notifBellBtn" onclick="handleNotifBell()" aria-label="Notificaciones"
           style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:18px;padding:8px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent">
-          <i class="fa-regular fa-bell"></i>
+          <i id="notifBellIcon" class="fa-regular fa-bell"></i>
         </button>
         <button id="menuBtn" onclick="toggleMenu()" aria-label="Menú">
           <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -1477,17 +1477,24 @@
 
     // Actualizar ícono de campana según estado
     function updateBellIcon() {
-      const btn = document.getElementById('notifBellBtn');
-      if (!btn) return;
+      const btn  = document.getElementById('notifBellBtn');
+      const icon = document.getElementById('notifBellIcon');
+      if (!btn || !icon) return;
       const perm = 'Notification' in window ? Notification.permission : 'default';
       if (perm === 'granted') {
+        icon.className = 'fa-solid fa-bell';
         btn.style.color = '#39FF14';
+        btn.style.filter = 'drop-shadow(0 0 6px rgba(57,255,20,0.5))';
         btn.title = 'Notificaciones activas';
       } else if (perm === 'denied') {
+        icon.className = 'fa-regular fa-bell';
         btn.style.color = 'rgba(255,255,255,0.25)';
+        btn.style.filter = 'none';
         btn.title = 'Notificaciones bloqueadas';
       } else {
+        icon.className = 'fa-regular fa-bell';
         btn.style.color = 'rgba(255,255,255,0.5)';
+        btn.style.filter = 'none';
         btn.title = 'Activar notificaciones';
       }
     }
