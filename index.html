@@ -478,6 +478,7 @@
             homeScore: parseInt(home?.score || "0"),
             awayScore: parseInt(away?.score || "0"),
             status: state,
+            statusType: comp?.status?.type?.name || "",
             completed,
             clock: comp?.status?.displayClock || "",
             homeTeam: home?.team?.displayName || "",
@@ -681,7 +682,7 @@
       const liveMatches = allMatchesData.filter(m => m.live && !m.played).map(m => {
         const key  = buildMatchKeyLocal(m.homeTeam, m.awayTeam);
         const espn = espnLiveScores[key];
-        return espn ? { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock } : m;
+        return espn ? { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock, espnStatus: espn.status } : m;
       });
 
       // Partidos finalizados agrupados por pestaña
@@ -727,7 +728,7 @@
                 </div>
                 <div style="text-align:center;flex-shrink:0">
                   <div class="result-score" style="color:#39ff14">${m.liveHomeScore ?? 0} - ${m.liveAwayScore ?? 0}</div>
-                  ${m.espnClock ? `<div style="font-size:11px;color:#ef4444;font-weight:700">${m.espnClock.replace(/'+$/, "")}'</div>` : ""}
+                  ${m.espnStatus === 'STATUS_HALFTIME' ? `<div style="font-size:11px;color:#f59e0b;font-weight:700">MEDIO TIEMPO</div>` : m.espnClock ? `<div style="font-size:11px;color:#ef4444;font-weight:700">${m.espnClock.replace(/\'+.*$/, "")}'</div>` : ""}
                 </div>
                 <div class="result-team away-team">
                   <span class="result-team-name">${escHtml(m.awayTeam)}</span>
