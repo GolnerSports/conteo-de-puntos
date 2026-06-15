@@ -82,6 +82,7 @@ input, select, textarea {
   background: rgba(8,12,10,0.92);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
 }
 .header-inner {
   max-width: 1280px; margin: 0 auto;
