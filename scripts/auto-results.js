@@ -101,7 +101,8 @@ const ESPN_NAME_MAP = {
   "cote divoire":           "costa de marfil",
 
   // ── Arabia Saudita ──
-  "saudi arabia":           "arabia saudita",
+  "saudi arabia":           "arabia saudi",
+  "arabia saudita":         "arabia saudi",
 
   // ── Sudáfrica ──
   "south africa":           "sudafrica",
