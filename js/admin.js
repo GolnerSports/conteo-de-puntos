@@ -1069,10 +1069,10 @@ window.fetchESPNMatches = async () => {
   list.style.display = "none";
 
   try {
-    // Traer los próximos 7 días
+    // Traer 10 días atrás y 14 días adelante
     const events = [];
     const now = new Date();
-    for (let i = 0; i < 7; i++) {
+    for (let i = -10; i < 14; i++) {
       const d = new Date(now); d.setDate(d.getDate() + i);
       const ds = `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`;
       const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${ds}`);
@@ -1102,18 +1102,21 @@ window.fetchESPNMatches = async () => {
       const dateInput = dateObj ? dateObj.toISOString().slice(0,16) : "";
       const mk = buildMatchKey(homeName, awayName);
       const exists = existingKeys.has(mk);
+      const played = comp?.status?.type?.completed === true;
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;background:${exists?"rgba(57,255,20,0.05)":"rgba(255,255,255,0.04)"};border:1px solid ${exists?"rgba(57,255,20,0.2)":"rgba(255,255,255,0.08)"};border-radius:10px;padding:10px 14px;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:${exists?"rgba(57,255,20,0.05)":"rgba(255,255,255,0.04)"};border:1px solid ${exists?"rgba(57,255,20,0.2)":played?"rgba(255,100,100,0.2)":"rgba(255,255,255,0.08)"};border-radius:10px;padding:10px 14px;gap:10px">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;color:#fff">${esc(homeName)} vs ${esc(awayName)}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${dateStr}</div>
+            <div style="font-size:13px;font-weight:700;color:${played&&!exists?"rgba(255,255,255,0.4)":"#fff"}">${esc(homeName)} vs ${esc(awayName)}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${dateStr}${played?" · Finalizado":""}</div>
           </div>
           ${exists
             ? `<span style="font-size:11px;color:#39FF14;font-weight:700;flex-shrink:0">✓ Ya cargado</span>`
-            : `<button onclick="fillMatchFromESPN('${esc(homeName)}','${esc(awayName)}','${dateInput}')"
-                style="background:#39FF14;color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
-                Seleccionar
-               </button>`
+            : played
+              ? `<span style="font-size:11px;color:rgba(255,100,100,0.8);font-weight:700;flex-shrink:0">Ya jugado</span>`
+              : `<button onclick="fillMatchFromESPN('${esc(homeName)}','${esc(awayName)}','${dateInput}')"
+                  style="background:#39FF14;color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+                  Seleccionar
+                 </button>`
           }
         </div>`;
     }).join("");
