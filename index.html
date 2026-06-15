@@ -1292,7 +1292,12 @@
 
       document.getElementById("statsModalBody").innerHTML = rows ||
         `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
-      document.getElementById("statsModal").style.display = "flex";
+      const sm = document.getElementById("statsModal");
+      const ss = document.getElementById("statsSheet");
+      ss.style.transform = "";
+      ss.style.transition = "";
+      sm.style.background = "rgba(0,0,0,0.6)";
+      sm.style.display = "flex";
       document.body.style.overflow = "hidden";
     };
 
