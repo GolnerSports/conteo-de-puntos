@@ -271,10 +271,11 @@
             <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;padding-top:2px">Mis puntos totales</div>
             <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:4px 10px;font-size:10px;cursor:pointer;flex-shrink:0">Cerrar sesión</button>
           </div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px">
             <div id="predTotalPts" style="font-size:64px;font-weight:900;color:#39FF14;line-height:1">0</div>
             <div id="predRankBadge" style="text-align:right;padding-bottom:6px"></div>
           </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:0 -24px;display:flex" id="predStatsRow"></div>
         </div>
       </div>
       <div id="predMatchList"></div>
@@ -962,6 +963,21 @@
       document.getElementById("predTotalPts").textContent = p.totalPoints || 0;
       const rank = allParticipants.slice().sort((a,b)=>(b.totalPoints||0)-(a.totalPoints||0)).findIndex(x=>x.id===p.id)+1;
       document.getElementById("predRankBadge").innerHTML = `<div style="font-size:36px;font-weight:900;color:rgba(255,255,255,0.7);line-height:1">#${rank}</div><div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">de ${allParticipants.length}</div>`;
+
+      // Estadísticas: aciertos y marcadores exactos
+      const playedBd = bd.filter(m => !m.pending && (m.hitWinner !== undefined));
+      const aciertos = playedBd.filter(m => m.hitWinner).length;
+      const exactos  = playedBd.filter(m => m.hitScore).length;
+      const totalPlayed = playedBd.length;
+      document.getElementById("predStatsRow").innerHTML = `
+        <div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.08);padding:10px 0">
+          <div style="font-size:22px;font-weight:900;color:#fff">${aciertos}<span style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:400"> / ${totalPlayed}</span></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px;text-transform:uppercase">Aciertos</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:10px 0">
+          <div style="font-size:22px;font-weight:900;color:#FFD700">${exactos}<span style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:400"> / ${totalPlayed}</span></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px;text-transform:uppercase">Marcador exacto</div>
+        </div>`;
 
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
 
