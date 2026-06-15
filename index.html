@@ -1254,66 +1254,106 @@
     function flag(team) { return FLAGS[team] || "🏳️"; }
 
     // ── MODAL ESTADÍSTICAS ────────────────────────────────────────
+    function escStats(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
     window.openStatsModal = () => {
       const list = window._golnerParticipants || allParticipants || [];
-      const matchHits = {}, matchTotal = {}, matchMeta = {}, matchWinners = {};
+      const matchHits = {}, matchTotals = {}, matchMeta = {};
       for (const p of list) {
         for (const m of (p.matchBreakdown || [])) {
-          const k = m.matchKey;
-          if (!k) continue;
-          matchTotal[k] = (matchTotal[k] || 0) + 1;
-          if (!matchMeta[k]) matchMeta[k] = { homeTeam: m.homeTeam, awayTeam: m.awayTeam };
-          if (m.hitWinner) {
-            matchHits[k] = (matchHits[k] || 0) + 1;
-            if (!matchWinners[k]) matchWinners[k] = [];
-            matchWinners[k].push(p.name);
-          }
+          const k = m.matchKey; if (!k) continue;
+          matchHits[k]   = (matchHits[k]   || 0) + (m.hitWinner ? 1 : 0);
+          matchTotals[k] = (matchTotals[k] || 0) + 1;
+          if (!matchMeta[k]) matchMeta[k] = { homeTeam: m.homeTeam || k, awayTeam: m.awayTeam || "" };
         }
       }
-      const accuracy = Object.entries(matchTotal)
-        .map(([k, total]) => ({
-          k,
-          homeTeam: (matchMeta[k] || {}).homeTeam || k,
-          awayTeam: (matchMeta[k] || {}).awayTeam || "",
-          hits: matchHits[k] || 0,
-          total,
-          pct: Math.round(((matchHits[k]||0) / total) * 100),
-          winners: matchWinners[k] || []
+      const accuracy = Object.entries(matchHits)
+        .map(([key, hits]) => ({
+          key,
+          label: `${matchMeta[key].homeTeam} vs ${matchMeta[key].awayTeam}`,
+          pct:   Math.round((hits / (matchTotals[key] || 1)) * 100),
+          hits,
+          total: matchTotals[key] || 1
         }))
         .sort((a, b) => b.pct - a.pct);
 
-      const colorForPct = p => p >= 70 ? '#39FF14' : p >= 40 ? '#FFD700' : '#FF6B6B';
-
-      const rows = accuracy.map((m, i) => {
-        const color = colorForPct(m.pct);
-        const winnersHtml = m.winners.map(n =>
-          `<span style="display:inline-block;background:rgba(255,255,255,0.07);border-radius:20px;padding:3px 10px;font-size:11px;color:rgba(255,255,255,0.7);margin:2px 3px 2px 0">${n}</span>`
-        ).join("");
-        return `
-        <div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:14px 0">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(255,255,255,0.3);flex-shrink:0">${i+1}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam} vs ${m.awayTeam}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">${m.hits} de ${m.total} participantes acertaron</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-              <span style="font-size:18px;font-weight:900;color:${color}">${m.pct}%</span>
-              <div style="width:64px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
-                <div style="width:${m.pct}%;height:100%;background:${color};border-radius:2px"></div>
-              </div>
-            </div>
+      const rows = accuracy.map(a => `
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+          <span style="flex:1;font-size:13px;font-weight:600;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escStats(a.label)}</span>
+          <div style="width:90px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;flex-shrink:0">
+            <div style="width:${a.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
           </div>
-          ${m.winners.length ? `<div style="margin-top:10px;padding-left:38px">${winnersHtml}</div>` : ''}
-        </div>`;
-      }).join("");
+          <span style="font-size:13px;font-weight:800;color:#39FF14;width:38px;text-align:right;flex-shrink:0">${a.pct}%</span>
+          <button onclick="showMatchParticipantsPublic('${escStats(a.key)}')"
+            style="background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.5);flex-shrink:0">
+            <i class="fa-solid fa-eye" style="font-size:12px"></i>
+          </button>
+        </div>`).join("");
 
-      document.getElementById("statsModalBody").innerHTML = rows || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
+      document.getElementById("statsModalBody").innerHTML = rows ||
+        `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
       document.getElementById("statsModal").style.display = "flex";
     };
 
     window.closeStatsModal = () => {
       document.getElementById("statsModal").style.display = "none";
+    };
+
+    window.showMatchParticipantsPublic = (matchKey) => {
+      const list = window._golnerParticipants || allParticipants || [];
+      const meta  = {};
+      for (const p of list) {
+        for (const m of (p.matchBreakdown || [])) {
+          if (m.matchKey === matchKey && !meta.homeTeam) {
+            meta.homeTeam  = m.homeTeam || matchKey;
+            meta.awayTeam  = m.awayTeam || "";
+            meta.homeScore = m.homeScore;
+            meta.awayScore = m.awayScore;
+          }
+        }
+      }
+      const label     = `${meta.homeTeam || matchKey} vs ${meta.awayTeam || ""}`;
+      const realScore = meta.homeScore !== undefined ? `${meta.homeScore}-${meta.awayScore}` : "";
+      const exact = [], winners = [], missed = [];
+      for (const p of list) {
+        const bd = (p.matchBreakdown || []).find(m => m.matchKey === matchKey);
+        if (!bd) { missed.push({ name: p.name, pred: "—" }); continue; }
+        const pred = (bd.predHome != null) ? `${bd.predHome}-${bd.predAway}` : "—";
+        if (bd.hitScore)       exact.push({ name: p.name, pred });
+        else if (bd.hitWinner) winners.push({ name: p.name, pred });
+        else                   missed.push({ name: p.name, pred });
+      }
+      const row = (icon, bg, p) =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:${bg};margin-bottom:4px">
+           <span style="font-size:16px">${icon}</span>
+           <span style="flex:1;font-size:13px;font-weight:600;color:#fff">${escStats(p.name)}</span>
+           <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);font-variant-numeric:tabular-nums">${escStats(p.pred)}</span>
+         </div>`;
+      const section = (title, icon, bg, arr) => arr.length
+        ? `<div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:.8px;text-transform:uppercase;padding:12px 0 6px">${title} (${arr.length})</div>
+           ${arr.map(p => row(icon, bg, p)).join("")}` : "";
+      const html = `
+        <div id="ampOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px">
+          <div style="background:#0e1410;border:1px solid rgba(57,255,20,0.2);border-radius:16px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+            <div style="padding:18px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div>
+                <div style="font-weight:700;font-size:16px;color:#fff">${escStats(label)}</div>
+                ${realScore ? `<div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:2px">Resultado: <strong style="color:#fff">${realScore}</strong></div>` : ""}
+              </div>
+              <button onclick="document.getElementById('ampOverlay').remove()"
+                style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:30px;height:30px;color:rgba(255,255,255,0.5);font-size:16px;cursor:pointer;flex-shrink:0">×</button>
+            </div>
+            <div style="overflow-y:auto;padding:4px 16px 20px;-webkit-overflow-scrolling:touch">
+              ${section("🎯 Marcador exacto","🎯","rgba(57,255,20,0.08)",exact)}
+              ${section("✅ Acertó ganador","✅","rgba(255,255,255,0.04)",winners)}
+              ${section("❌ Falló","❌","rgba(255,80,80,0.05)",missed)}
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML("beforeend", html);
+      document.getElementById("ampOverlay").addEventListener("click", e => {
+        if (e.target.id === "ampOverlay") e.target.remove();
+      });
     };
 
   </script>
