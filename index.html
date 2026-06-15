@@ -887,7 +887,7 @@
         return (ia===-1?99:ia)-(ib===-1?99:ib);
       });
 
-      const resultLabel = r => r === "home" ? "Local" : r === "away" ? "Visitante" : r === "draw" ? "Empate" : "—";
+      const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
       const pts = m => m.pending ? `<span style="color:rgba(255,255,255,0.3);font-size:11px">Pendiente</span>`
         : m.hitScore   ? `<span style="color:#39FF14;font-weight:800">5 pts 🎯</span>`
         : m.hitWinner  ? `<span style="color:#39FF14;font-weight:700">3 pts ✅</span>`
@@ -903,7 +903,7 @@
                 ${pts(m)}
               </div>
               <div style="display:flex;gap:16px;font-size:12px;color:rgba(255,255,255,0.5)">
-                <span>Tu predicción: <strong style="color:#fff">${resultLabel(m.predResult)} ${m.predHome!==null&&m.predHome!==undefined?`${m.predHome}-${m.predAway}`:""}</strong></span>
+                <span>Tu predicción: <strong style="color:#fff">${resultLabel(m.predResult, m.homeTeam, m.awayTeam)} ${m.predHome!==null&&m.predHome!==undefined?`${m.predHome}-${m.predAway}`:""}</strong></span>
                 ${!m.pending ? `<span>Real: <strong style="color:#fff">${m.realHome}-${m.realAway}</strong></span>` : ""}
               </div>
             </div>`).join("")}
