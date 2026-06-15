@@ -1256,36 +1256,57 @@
     // ── MODAL ESTADÍSTICAS ────────────────────────────────────────
     window.openStatsModal = () => {
       const list = window._golnerParticipants || allParticipants || [];
-      const matchHits = {}, matchTotal = {}, matchMeta = {};
+      const matchHits = {}, matchTotal = {}, matchMeta = {}, matchWinners = {};
       for (const p of list) {
         for (const m of (p.matchBreakdown || [])) {
           const k = m.matchKey;
           if (!k) continue;
-          matchHits[k]  = (matchHits[k]  || 0) + (m.hitWinner ? 1 : 0);
           matchTotal[k] = (matchTotal[k] || 0) + 1;
           if (!matchMeta[k]) matchMeta[k] = { homeTeam: m.homeTeam, awayTeam: m.awayTeam };
+          if (m.hitWinner) {
+            matchHits[k] = (matchHits[k] || 0) + 1;
+            if (!matchWinners[k]) matchWinners[k] = [];
+            matchWinners[k].push(p.name);
+          }
         }
       }
       const accuracy = Object.entries(matchTotal)
         .map(([k, total]) => ({
+          k,
           homeTeam: (matchMeta[k] || {}).homeTeam || k,
           awayTeam: (matchMeta[k] || {}).awayTeam || "",
           hits: matchHits[k] || 0,
           total,
-          pct: Math.round(((matchHits[k]||0) / total) * 100)
+          pct: Math.round(((matchHits[k]||0) / total) * 100),
+          winners: matchWinners[k] || []
         }))
         .sort((a, b) => b.pct - a.pct);
 
-      const rows = accuracy.map(m => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
-          <span style="font-size:13px;font-weight:600;color:#fff;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam} vs ${m.awayTeam}</span>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px">
-            <div style="width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
-              <div style="width:${m.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
+      const colorForPct = p => p >= 70 ? '#39FF14' : p >= 40 ? '#FFD700' : '#FF6B6B';
+
+      const rows = accuracy.map((m, i) => {
+        const color = colorForPct(m.pct);
+        const winnersHtml = m.winners.map(n =>
+          `<span style="display:inline-block;background:rgba(255,255,255,0.07);border-radius:20px;padding:3px 10px;font-size:11px;color:rgba(255,255,255,0.7);margin:2px 3px 2px 0">${n}</span>`
+        ).join("");
+        return `
+        <div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:14px 0">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(255,255,255,0.3);flex-shrink:0">${i+1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam} vs ${m.awayTeam}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">${m.hits} de ${m.total} participantes acertaron</div>
             </div>
-            <span style="font-size:13px;font-weight:800;color:#39FF14;width:36px;text-align:right">${m.pct}%</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+              <span style="font-size:18px;font-weight:900;color:${color}">${m.pct}%</span>
+              <div style="width:64px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+                <div style="width:${m.pct}%;height:100%;background:${color};border-radius:2px"></div>
+              </div>
+            </div>
           </div>
-        </div>`).join("");
+          ${m.winners.length ? `<div style="margin-top:10px;padding-left:38px">${winnersHtml}</div>` : ''}
+        </div>`;
+      }).join("");
 
       document.getElementById("statsModalBody").innerHTML = rows || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
       document.getElementById("statsModal").style.display = "flex";
@@ -1449,19 +1470,23 @@
   </script>
 
   <!-- Modal Estadísticas -->
-  <div id="statsModal" onclick="closeStatsModal()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center">
-    <div onclick="event.stopPropagation()" style="background:#0e1410;border-radius:20px 20px 0 0;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08)">
-        <div style="display:flex;align-items:center;gap:10px">
-          <i class="fa-solid fa-chart-bar" style="color:#39FF14"></i>
-          <span style="font-size:16px;font-weight:800">Estadísticas</span>
+  <div id="statsModal" onclick="closeStatsModal()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center">
+    <div onclick="event.stopPropagation()" style="background:#0d1a0d;border-radius:24px 24px 0 0;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -4px 40px rgba(0,0,0,0.6)">
+      <!-- Handle -->
+      <div style="display:flex;justify-content:center;padding:10px 0 0">
+        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px"></div>
+      </div>
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px">
+        <div>
+          <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.3px">Estadísticas</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">Aciertos por partido · Mundial 2026</div>
         </div>
-        <button onclick="closeStatsModal()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer">✕</button>
+        <button onclick="closeStatsModal()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
       </div>
-      <div style="padding:4px 20px;border-bottom:1px solid rgba(255,255,255,0.08)">
-        <p style="font-size:11px;color:rgba(255,255,255,0.4);margin:8px 0">⚽ Partido más acertado</p>
-      </div>
-      <div id="statsModalBody" style="overflow-y:auto;padding:0 20px 24px;-webkit-overflow-scrolling:touch"></div>
+      <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 20px"></div>
+      <!-- Body -->
+      <div id="statsModalBody" style="overflow-y:auto;padding:4px 20px 32px;-webkit-overflow-scrolling:touch"></div>
     </div>
   </div>
 </body>
