@@ -1454,8 +1454,11 @@ function renderStats() {
     .map(([key, hits]) => {
       const real = allMatches.find(m => m.matchKey === key) || {};
       return {
+        key,
         label: `${real.homeTeam || key} vs ${real.awayTeam || ""}`,
-        pct:   Math.round((hits / (matchTotals[key] || 1)) * 100)
+        pct:   Math.round((hits / (matchTotals[key] || 1)) * 100),
+        hits,
+        total: matchTotals[key] || 1
       };
     })
     .sort((a, b) => b.pct - a.pct);
@@ -1465,8 +1468,79 @@ function renderStats() {
       <span class="accuracy-item-match">${esc(a.label)}</span>
       <div class="accuracy-bar-wrap"><div class="accuracy-bar" style="width:${a.pct}%"></div></div>
       <span class="accuracy-pct">${a.pct}%</span>
+      <button class="acc-eye-btn" data-key="${esc(a.key)}" title="Ver participantes">
+        <i class="fa-solid fa-eye"></i>
+      </button>
     </div>
   `).join("") || `<p style="color:rgba(255,255,255,0.4);padding:16px;font-size:13px">Sin datos de precisión aún.</p>`;
+
+  // Listeners del ojo
+  accContainer.querySelectorAll(".acc-eye-btn").forEach(btn => {
+    btn.addEventListener("click", () => showMatchParticipants(btn.dataset.key));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// MODAL: PARTICIPANTES POR PARTIDO
+// ════════════════════════════════════════════════════════════════
+
+function showMatchParticipants(matchKey) {
+  const match = allMatches.find(m =>
+    m.matchKey === matchKey ||
+    buildMatchKey(m.homeTeam || "", m.awayTeam || "") === matchKey
+  ) || {};
+
+  const label = `${match.homeTeam || matchKey} vs ${match.awayTeam || ""}`;
+  const realScore = match.homeScore !== undefined ? `${match.homeScore}-${match.awayScore}` : "";
+
+  // Clasificar participantes
+  const exact   = [];
+  const winners = [];
+  const missed  = [];
+
+  for (const p of allParticipants) {
+    const bd = (p.matchBreakdown || []).find(m => {
+      const normKey = buildMatchKey(m.homeTeam || "", m.awayTeam || "");
+      return m.matchKey === matchKey || normKey === matchKey ||
+             buildMatchKey(m.homeTeam||"",m.awayTeam||"") === buildMatchKey(match.homeTeam||"",match.awayTeam||"");
+    });
+    if (!bd) { missed.push({ name: p.name, pred: "—" }); continue; }
+    const predScore = (bd.predHome !== null && bd.predHome !== undefined)
+      ? `${bd.predHome}-${bd.predAway}` : "—";
+    if (bd.hitScore)        exact.push({ name: p.name, pred: predScore });
+    else if (bd.hitWinner)  winners.push({ name: p.name, pred: predScore });
+    else                    missed.push({ name: p.name, pred: predScore });
+  }
+
+  const row = (icon, cls, p) =>
+    `<div class="amp-row ${cls}">
+       <span class="amp-icon">${icon}</span>
+       <span class="amp-name">${esc(p.name)}</span>
+       <span class="amp-pred">${esc(p.pred)}</span>
+     </div>`;
+
+  const html = `
+    <div id="ampOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="background:#0e1410;border:1px solid rgba(57,255,20,0.2);border-radius:16px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:20px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-weight:700;font-size:16px">${esc(label)}</div>
+            ${realScore ? `<div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:2px">Resultado: <strong style="color:#fff">${realScore}</strong></div>` : ""}
+          </div>
+          <button onclick="document.getElementById('ampOverlay').remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;line-height:1;padding:0">×</button>
+        </div>
+        <div style="overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:4px">
+          ${exact.length   ? `<div class="amp-section-label">🎯 Marcador exacto (${exact.length})</div>${exact.map(p=>row("🎯","amp-exact",p)).join("")}` : ""}
+          ${winners.length ? `<div class="amp-section-label">✅ Acertó ganador (${winners.length})</div>${winners.map(p=>row("✅","amp-winner",p)).join("")}` : ""}
+          ${missed.length  ? `<div class="amp-section-label">❌ Falló (${missed.length})</div>${missed.map(p=>row("❌","amp-miss",p)).join("")}` : ""}
+        </div>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML("beforeend", html);
+  document.getElementById("ampOverlay").addEventListener("click", e => {
+    if (e.target.id === "ampOverlay") e.target.remove();
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
