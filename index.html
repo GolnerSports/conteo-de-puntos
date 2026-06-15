@@ -887,27 +887,49 @@
         return (ia===-1?99:ia)-(ib===-1?99:ib);
       });
 
+      // Pestaña activa: la más reciente por defecto
+      if (!window.activePredTab || !sorted.includes(window.activePredTab)) {
+        window.activePredTab = sorted[sorted.length - 1] || null;
+      }
+
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
       const pts = m => m.pending ? `<span style="color:rgba(255,255,255,0.3);font-size:11px">Pendiente</span>`
         : m.hitScore   ? `<span style="color:#39FF14;font-weight:800">5 pts 🎯</span>`
         : m.hitWinner  ? `<span style="color:#39FF14;font-weight:700">3 pts ✅</span>`
         : `<span style="color:#ef4444;font-weight:600">0 pts ❌</span>`;
 
-      document.getElementById("predMatchList").innerHTML = sorted.map(sec => `
-        <div style="margin-bottom:20px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06)">${sec}</div>
-          ${groups[sec].map(m => `
-            <div style="background:#0e1410;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <span style="font-size:13px;font-weight:700">${m.homeTeam} vs ${m.awayTeam}</span>
-                ${pts(m)}
-              </div>
-              <div style="display:flex;gap:16px;font-size:12px;color:rgba(255,255,255,0.5)">
-                <span>Tu predicción: <strong style="color:#fff">${resultLabel(m.predResult, m.homeTeam, m.awayTeam)} ${m.predHome!==null&&m.predHome!==undefined?`${m.predHome}-${m.predAway}`:""}</strong></span>
-                ${!m.pending ? `<span>Real: <strong style="color:#fff">${m.realHome}-${m.realAway}</strong></span>` : ""}
-              </div>
-            </div>`).join("")}
-        </div>`).join("") || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;font-size:14px">No hay predicciones registradas aún.</div>`;
+      const tabBar = sorted.length > 1 ? `
+        <div class="results-tab-bar" style="margin-bottom:4px">
+          ${sorted.map(t => `<button class="results-tab ${t === window.activePredTab ? "active" : ""}" data-ptab="${t}">${t}</button>`).join("")}
+        </div>` : "";
+
+      const activeMatches = window.activePredTab && groups[window.activePredTab] ? groups[window.activePredTab] : [];
+
+      const matchCards = activeMatches.map(m => `
+        <div style="background:#0e1410;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:700">${m.homeTeam} vs ${m.awayTeam}</span>
+            ${pts(m)}
+          </div>
+          <div style="display:flex;gap:16px;font-size:12px;color:rgba(255,255,255,0.5)">
+            <span>Tu predicción: <strong style="color:#fff">${resultLabel(m.predResult, m.homeTeam, m.awayTeam)} ${m.predHome!==null&&m.predHome!==undefined?`${m.predHome}-${m.predAway}`:""}</strong></span>
+            ${!m.pending ? `<span>Real: <strong style="color:#fff">${m.realHome}-${m.realAway}</strong></span>` : ""}
+          </div>
+        </div>`).join("");
+
+      const container = document.getElementById("predMatchList");
+      container.innerHTML = sorted.length
+        ? tabBar + `<div style="padding-top:8px">${matchCards}</div>`
+        : `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;font-size:14px">No hay predicciones registradas aún.</div>`;
+
+      // Listeners pestañas
+      container.querySelectorAll("[data-ptab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          window.activePredTab = btn.dataset.ptab;
+          renderPredView();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
     }
 
     // Verificar sesión guardada al cargar
