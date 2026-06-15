@@ -534,7 +534,7 @@ async function saveParticipant(parsed) {
     name:            existing ? existing.name : parsed.name,
     // Si el participante no tenía ID, aprovechar para guardarlo ahora
     golnerId:        existing?.golnerId || parsed.golnerId || null,
-    phone:           existing ? (existing.phone || null) : (parsed.phone || null),
+    phone:           parsed.phone || (existing ? existing.phone : null) || null,
     totalPoints,
     weekPoints,
     phasePoints,
@@ -631,6 +631,9 @@ function renderParticipantsTable() {
           <button class="btn-icon" title="Editar nombre" onclick="editParticipantName('${p.id}','${esc(p.name)}')">
             <i class="fa-solid fa-pen"></i>
           </button>
+          <button class="btn-icon" title="Editar teléfono" onclick="editParticipantPhone('${p.id}','${esc(p.phone||'')}')">
+            <i class="fa-solid fa-phone"></i>
+          </button>
           <button class="btn-icon" title="Recalcular" onclick="recalcParticipant('${p.id}')">
             <i class="fa-solid fa-rotate"></i>
           </button>
@@ -706,6 +709,14 @@ window.editParticipantName = async (id, currentName) => {
   if (!newName || newName.trim() === currentName.trim()) return;
   await updateDoc(doc(db, "participants", id), { name: newName.trim() });
   showToast(`✅ Nombre actualizado a "${newName.trim()}"`);
+};
+
+window.editParticipantPhone = async (id, currentPhone) => {
+  const newPhone = prompt(`Editar teléfono (número completo):`, currentPhone || "");
+  if (newPhone === null) return;
+  const cleaned = newPhone.trim().replace(/\s/g, "");
+  await updateDoc(doc(db, "participants", id), { phone: cleaned || null });
+  showToast(`✅ Teléfono actualizado`);
 };
 
 window.confirmDeleteParticipant = (id, name) => {
