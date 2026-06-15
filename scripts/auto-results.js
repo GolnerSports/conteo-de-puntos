@@ -446,15 +446,12 @@ async function main() {
   for (const espn of inProgress) {
     const matchKey    = buildMatchKey(espn.homeTeam, espn.awayTeam);
     const matchKeyRev = buildMatchKey(espn.awayTeam,  espn.homeTeam);
-    console.log(`🔎 Buscando: "${matchKey}" o "${matchKeyRev}"`);
-    console.log(`📋 Claves en Firestore: ${allMatches.map(m=>m.matchKey).filter(Boolean).join(", ")}`);
     const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
       m.matchKey === matchKeyRev ||
       buildMatchKey(m.homeTeam, m.awayTeam) === matchKey ||
       buildMatchKey(m.homeTeam, m.awayTeam) === matchKeyRev
     );
-    console.log(fsMatch ? `✅ Encontrado: ${fsMatch.matchKey}` : `❌ NO encontrado en Firestore`);
     if (fsMatch && !fsMatch.finalized) {
       const update = {
         live: true,
