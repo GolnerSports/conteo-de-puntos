@@ -947,6 +947,22 @@
         }
       }
 
+      // Ordenar partidos dentro de cada grupo por fecha
+      const matchDateMap = {};
+      for (const m of allMatchesData) {
+        if (m.matchKey && m.date) {
+          const d = m.date?.toDate ? m.date.toDate() : new Date(m.date);
+          matchDateMap[m.matchKey] = d;
+        }
+      }
+      for (const sec of Object.keys(groups)) {
+        groups[sec].sort((a, b) => {
+          const da = matchDateMap[a.matchKey] || new Date(0);
+          const db2 = matchDateMap[b.matchKey] || new Date(0);
+          return da - db2;
+        });
+      }
+
       const sorted = Object.keys(groups).sort((a,b) => {
         const ia = SECTION_ORDER_P.indexOf(a), ib = SECTION_ORDER_P.indexOf(b);
         return (ia===-1?99:ia)-(ib===-1?99:ib);
