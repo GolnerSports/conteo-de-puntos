@@ -265,17 +265,17 @@
     </div>
     <div id="predView-content" style="display:none;padding:0">
       <!-- Tarjeta de puntos totales -->
-      <div style="margin:-32px -16px 0">
-        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:12px 20px;margin-bottom:8px">
+      <div style="padding:8px 12px 0">
+        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:12px 16px;margin-bottom:8px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase">Mis puntos totales</div>
             <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:3px 10px;font-size:10px;cursor:pointer;flex-shrink:0">Cerrar sesión</button>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div id="predTotalPts" style="font-size:40px;font-weight:900;color:#39FF14;line-height:1">0</div>
+            <div id="predTotalPts" style="font-size:36px;font-weight:900;color:#39FF14;line-height:1">0</div>
             <div id="predRankBadge" style="text-align:right"></div>
           </div>
-          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:0 -24px -12px;display:flex" id="predStatsRow"></div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:0 -16px -12px;display:flex" id="predStatsRow"></div>
         </div>
       </div>
       <div id="predMatchList"></div>
@@ -972,7 +972,7 @@
       // Puntos totales en cabecera
       document.getElementById("predTotalPts").textContent = p.totalPoints || 0;
       const rank = allParticipants.slice().sort((a,b)=>(b.totalPoints||0)-(a.totalPoints||0)).findIndex(x=>x.id===p.id)+1;
-      document.getElementById("predRankBadge").innerHTML = `<div style="font-size:28px;font-weight:900;color:rgba(255,255,255,0.7);line-height:1">#${rank}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">de ${allParticipants.length}</div>`;
+      document.getElementById("predRankBadge").innerHTML = `<div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.7);line-height:1">#${rank}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">de ${allParticipants.length}</div>`;
 
       // Estadísticas: aciertos y marcadores exactos
       const playedBd = bd.filter(m => !m.pending && (m.hitWinner !== undefined));
