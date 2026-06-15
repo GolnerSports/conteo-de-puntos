@@ -1293,10 +1293,12 @@
       document.getElementById("statsModalBody").innerHTML = rows ||
         `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
       document.getElementById("statsModal").style.display = "flex";
+      document.body.style.overflow = "hidden";
     };
 
     window.closeStatsModal = () => {
       document.getElementById("statsModal").style.display = "none";
+      document.body.style.overflow = "";
     };
 
     window.showMatchParticipantsPublic = (matchKey) => {
