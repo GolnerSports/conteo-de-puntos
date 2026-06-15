@@ -764,6 +764,7 @@
       const isResultados = viewName === "resultados";
       const isPredicciones = viewName === "predicciones";
       document.body.classList.toggle("view-resultados-active", isResultados || isPredicciones);
+      document.body.classList.toggle("view-predicciones-active", isPredicciones);
       // Cambiar header según vista
       const session = getSession();
       const showUserHeader = isPredicciones && session;

@@ -573,6 +573,9 @@ input, select, textarea {
 body.view-resultados-active .hero,
 body.view-resultados-active .stats-bar { display: none; }
 
+/* Sin padding superior en vista predicciones para que la barra sticky quede pegada al header */
+body.view-predicciones-active .main-content { padding-top: 0; }
+
 .pub-bottom-nav {
   display: flex;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
