@@ -964,7 +964,7 @@
         return `
         <div style="background:${cardBg(m)};border-left:3px solid ${cardBorder(m)};padding:14px 16px;margin-bottom:2px">
           <!-- Equipos -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
               <span style="font-size:20px">${hFlag}</span>
               <span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam}</span>
@@ -975,19 +975,24 @@
               <span style="font-size:20px">${aFlag}</span>
             </div>
           </div>
-          <!-- Marcadores -->
-          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px">
-            <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-bottom:3px">MI PRED</div>
-              <div style="font-size:18px;font-weight:900;color:#fff">${predScore}</div>
-              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px">${predWinner !== "Empate" ? predWinner : "Empate"}</div>
+          <!-- Marcadores verticales -->
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.05);border-radius:8px;padding:8px 12px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.4)">TU PREDICCIÓN</span>
+              <div style="text-align:right">
+                <span style="font-size:16px;font-weight:900;color:#fff">${predScore}</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.35);margin-left:6px">${predWinner}</span>
+              </div>
             </div>
-            <div style="font-size:16px;text-align:center">⚽</div>
-            <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-bottom:3px">REAL</div>
-              <div style="font-size:18px;font-weight:900;color:#fff">${realScore || "—"}</div>
-              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px">&nbsp;</div>
-            </div>
+            ${!m.pending ? `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.05);border-radius:8px;padding:8px 12px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.4)">RESULTADO REAL</span>
+              <span style="font-size:16px;font-weight:900;color:#fff">${realScore}</span>
+            </div>` : `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 12px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.25)">RESULTADO REAL</span>
+              <span style="font-size:11px;color:rgba(255,255,255,0.25)">Pendiente</span>
+            </div>`}
           </div>
           <!-- Badge de puntos -->
           <div style="display:flex;justify-content:flex-end">${ptsBadge(m)}</div>
