@@ -790,8 +790,6 @@
         const idMatch    = (p.golnerId || "").toUpperCase() === rawId;
         if (!idMatch) return false;
         const phoneStr   = (p.phone || "").replace(/\D/g, "");
-        // Si no tiene teléfono guardado, solo se requiere el ID
-        if (!phoneStr) return true;
         return phoneStr.endsWith(phone4);
       });
 
