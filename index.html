@@ -777,11 +777,11 @@
 
     window.doAuth = () => {
       const rawId    = document.getElementById("authIdInput").value.trim().toUpperCase();
-      const phone4   = document.getElementById("authPhoneInput").value.trim();
+      const phone4   = document.getElementById("authPhoneInput").value.replace(/\D/g, "").trim();
       const errEl    = document.getElementById("authError");
       errEl.style.display = "none";
 
-      if (!rawId || !phone4 || phone4.length < 4) {
+      if (!rawId || phone4.length < 4) {
         errEl.textContent = "Completa ambos campos correctamente.";
         errEl.style.display = "block"; return;
       }
