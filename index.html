@@ -266,14 +266,14 @@
     <div id="predView-content" style="display:none;padding:0">
       <!-- Tarjeta de puntos totales -->
       <div style="padding:16px 16px 0">
-        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:4px">Mis puntos totales</div>
-            <div id="predTotalPts" style="font-size:38px;font-weight:900;color:#39FF14;line-height:1">0</div>
+        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:16px 20px;margin-bottom:12px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;padding-top:2px">Mis puntos totales</div>
+            <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:4px 10px;font-size:10px;cursor:pointer;flex-shrink:0">Cerrar sesión</button>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-            <div id="predRankBadge"></div>
-            <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer">Cerrar sesión</button>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between">
+            <div id="predTotalPts" style="font-size:48px;font-weight:900;color:#39FF14;line-height:1">0</div>
+            <div id="predRankBadge" style="text-align:right;padding-bottom:4px"></div>
           </div>
         </div>
       </div>
