@@ -1278,7 +1278,7 @@
         .sort((a, b) => b.pct - a.pct);
 
       const rows = accuracy.map(a => `
-        <div class="stats-row" data-label="${escStats(a.label)}" style="display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div class="srow" data-label="${a.label.toLowerCase()}" style="display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
           <span style="flex:1;font-size:13px;font-weight:600;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escStats(a.label)}</span>
           <div style="width:90px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;flex-shrink:0">
             <div style="width:${a.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
@@ -1316,7 +1316,7 @@
 
     window.filterStatsRows = (q) => {
       const term = q.trim().toLowerCase();
-      document.querySelectorAll("#statsModalBody .stats-row").forEach(el => {
+      document.querySelectorAll("#statsModalBody .srow").forEach(el => {
         el.style.display = !term || el.dataset.label.toLowerCase().includes(term) ? "" : "none";
       });
     };
