@@ -1337,10 +1337,7 @@
       const html = `
         <div id="ampOverlay" class="amp-overlay-enter" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:flex-end;justify-content:center">
           <div class="amp-panel-enter" style="background:linear-gradient(180deg,#0f1f0f,#0a140a);border-radius:24px 24px 0 0;width:100%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -2px 60px rgba(0,0,0,0.8),0 0 0 1px rgba(57,255,20,0.1)">
-            <div style="display:flex;justify-content:center;padding:10px 0 0">
-              <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px"></div>
-            </div>
-            <div style="padding:14px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
               <div>
                 <div style="font-weight:900;font-size:17px;color:#fff;letter-spacing:-0.3px">${escStats(label)}</div>
                 ${realScore ? `<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px">Resultado final: <strong style="color:#39FF14">${realScore}</strong></div>` : ""}
@@ -1517,10 +1514,6 @@
   <!-- Modal Estadísticas -->
   <div id="statsModal" onclick="closeStatsModal()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center">
     <div onclick="event.stopPropagation()" style="background:linear-gradient(180deg,#0f1f0f 0%,#0a140a 100%);border-radius:24px 24px 0 0;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -2px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(57,255,20,0.08)">
-      <!-- Handle -->
-      <div style="display:flex;justify-content:center;padding:10px 0 0">
-        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px"></div>
-      </div>
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px">
         <div>
