@@ -105,18 +105,65 @@ input, select, textarea {
 }
 .brand-sub { display: block; font-size: 11px; color: var(--white-60); letter-spacing: 0.5px; white-space: nowrap; }
 
-.header-nav { display: flex; align-items: center; gap: 8px; }
-.nav-link {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 8px;
-  font-size: 13px; font-weight: 500;
-  color: var(--white-60);
-  transition: all var(--transition);
+/* ── Botón menú ··· ── */
+#menuBtn {
+  background: none; border: none; cursor: pointer;
+  color: var(--white-60); font-size: 22px;
+  padding: 8px 10px; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .2s;
 }
-.nav-link:hover, .nav-link.active {
+#menuBtn:hover { color: var(--white); }
+
+/* ── Menú lateral ── */
+#menuOverlay {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+}
+#menuOverlay.open { display: block; }
+#sideMenu {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 500;
+  width: 280px; background: #0a0f0c;
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16,1,0.3,1);
+  padding: calc(env(safe-area-inset-top) + 20px) 0 calc(env(safe-area-inset-bottom) + 20px);
+}
+#sideMenu.open { transform: translateX(0); }
+
+#sideMenuUser {
+  padding: 0 20px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+#sideMenuUserName {
+  font-size: 15px; font-weight: 700; color: var(--white);
+}
+#sideMenuUserId {
+  font-size: 11px; color: var(--green); font-weight: 600;
+  letter-spacing: 0.5px; margin-top: 2px;
+}
+
+#sideMenuNav { display: flex; flex-direction: column; padding: 0 12px; flex: 1; }
+.smenu-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 10px;
+  font-size: 14px; font-weight: 500;
+  color: var(--white-60); background: none; border: none;
+  cursor: pointer; text-decoration: none;
+  transition: all .15s; -webkit-tap-highlight-color: transparent;
+}
+.smenu-item:hover, .smenu-item.active {
   background: var(--white-15); color: var(--white);
 }
-.nav-link.admin-link:hover { background: var(--green-glow); color: var(--green); }
+.smenu-item.active { color: var(--green); }
+.smenu-item i { width: 18px; text-align: center; font-size: 16px; flex-shrink: 0; }
+.smenu-divider {
+  height: 1px; background: var(--border);
+  margin: 8px 16px;
+}
 
 /* ════════════════════════════════════════════════════════════
    HERO
