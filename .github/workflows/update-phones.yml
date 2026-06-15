@@ -1,0 +1,23 @@
+name: Update Participant Phones (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-phones:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+        working-directory: scripts
+      - name: Run phone update
+        working-directory: scripts
+        env:
+          SA_PRIVATE_KEY_ID: ${{ secrets.SA_PRIVATE_KEY_ID }}
+          SA_PRIVATE_KEY:    ${{ secrets.SA_PRIVATE_KEY }}
+          SA_CLIENT_EMAIL:   ${{ secrets.SA_CLIENT_EMAIL }}
+          SA_CLIENT_ID:      ${{ secrets.SA_CLIENT_ID }}
+        run: node update-phones.js
