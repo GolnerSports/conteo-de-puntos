@@ -963,29 +963,27 @@
         const predWinner = resultLabel(m.predResult, m.homeTeam, m.awayTeam);
         return `
         <div style="background:${cardBg(m)};border-left:3px solid ${cardBorder(m)};padding:10px 16px;margin-bottom:2px">
+          <!-- Fila 1: equipos -->
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px">
+            <span style="font-size:15px">${hFlag}</span>
+            <span style="font-size:12px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam}</span>
+            <span style="font-size:9px;color:rgba(255,255,255,0.3);flex-shrink:0">vs</span>
+            <span style="font-size:12px;font-weight:700;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.awayTeam}</span>
+            <span style="font-size:15px">${aFlag}</span>
+          </div>
+          <!-- Fila 2: predicción y resultado alineados -->
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <!-- Equipos + marcadores -->
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
-                <span style="font-size:16px">${hFlag}</span>
-                <span style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam}</span>
-                <span style="font-size:9px;color:rgba(255,255,255,0.3);padding:0 4px">vs</span>
-                <span style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.awayTeam}</span>
-                <span style="font-size:16px">${aFlag}</span>
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+              <div style="display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px">
+                <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35)">MI PRED</span>
+                <span style="font-size:14px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums">${predScore} <span style="font-size:9px;color:rgba(255,255,255,0.35);font-weight:400">${predWinner}</span></span>
               </div>
-              <div style="display:flex;flex-direction:column;gap:3px">
-                <div style="display:flex;align-items:center;justify-content:space-between">
-                  <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35)">MI PRED</span>
-                  <span style="font-size:13px;font-weight:800;color:#fff">${predScore} <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:400">${predWinner}</span></span>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between">
-                  <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35)">REAL</span>
-                  <span style="font-size:13px;font-weight:800;color:${m.pending ? "rgba(255,255,255,0.25)" : "#fff"}">${m.pending ? "—" : realScore}</span>
-                </div>
+              <div style="display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px">
+                <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35)">REAL</span>
+                <span style="font-size:14px;font-weight:900;color:${m.pending ? "rgba(255,255,255,0.2)" : "#fff"};font-variant-numeric:tabular-nums">${m.pending ? "—" : realScore}</span>
               </div>
             </div>
-            <!-- Badge -->
-            <div style="margin-left:12px;flex-shrink:0">${ptsBadge(m)}</div>
+            <div style="flex-shrink:0;margin-left:10px">${ptsBadge(m)}</div>
           </div>
         </div>`;
       }).join("");
