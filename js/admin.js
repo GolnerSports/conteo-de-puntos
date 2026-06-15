@@ -1037,6 +1037,104 @@ document.getElementById("addMatchBtn").addEventListener("click", async () => {
   }
 });
 
+// ════════════════════════════════════════════════════════════════
+// IMPORTAR PARTIDOS DESDE ESPN
+// ════════════════════════════════════════════════════════════════
+const ESPN_TEAM_MAP = {
+  "united states":"Estados Unidos","usa":"Estados Unidos","czechia":"Republica Checa",
+  "czech republic":"Republica Checa","south korea":"Corea del Sur","korea republic":"Corea del Sur",
+  "ivory coast":"Costa de Marfil","cote d'ivoire":"Costa de Marfil","saudi arabia":"Arabia Saudi",
+  "south africa":"Sudafrica","dr congo":"RD Congo","democratic republic of congo":"RD Congo",
+  "bosnia-herzegovina":"Bosnia","bosnia and herzegovina":"Bosnia","turkiye":"Turquia","turkey":"Turquia",
+  "netherlands":"Paises Bajos","algeria":"Argelia","germany":"Alemania","belgium":"Belgica",
+  "switzerland":"Suiza","sweden":"Suecia","norway":"Noruega","morocco":"Marruecos","egypt":"Egipto",
+  "tunisia":"Tunez","cape verde":"Cabo Verde","curacao":"Curazao","jordan":"Jordania",
+  "scotland":"Escocia","england":"Inglaterra","iran":"Iran","iraq":"Irak","qatar":"Catar",
+  "new zealand":"Nueva Zelanda","panama":"Panama","croatia":"Croacia","france":"Francia",
+  "spain":"Espana","brazil":"Brasil","japan":"Japon","mexico":"Mexico","australia":"Australia",
+  "uzbekistan":"Uzbekistan","paraguay":"Paraguay","senegal":"Senegal","colombia":"Colombia",
+  "ghana":"Ghana","portugal":"Portugal","argentina":"Argentina","canada":"Canada",
+  "uruguay":"Uruguay","ecuador":"Ecuador","austria":"Austria","haiti":"Haiti",
+};
+
+function espnTeamName(name) {
+  return ESPN_TEAM_MAP[(name||"").toLowerCase()] || name;
+}
+
+window.fetchESPNMatches = async () => {
+  const btn = document.getElementById("espnImportBtn");
+  const list = document.getElementById("espnMatchList");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cargando...`;
+  list.style.display = "none";
+
+  try {
+    // Traer los próximos 7 días
+    const events = [];
+    const now = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now); d.setDate(d.getDate() + i);
+      const ds = `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`;
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${ds}`);
+      const data = await res.json();
+      events.push(...(data.events || []));
+    }
+
+    if (!events.length) { showToast("No hay partidos en ESPN para los próximos 7 días.", "error"); return; }
+
+    // Deduplicar por id
+    const seen = new Set();
+    const unique = events.filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
+
+    // Obtener matchKeys ya en Firestore para marcar duplicados
+    const existingKeys = new Set(allMatches.map(m => m.matchKey));
+
+    list.style.display = "flex";
+    list.innerHTML = unique.map(e => {
+      const comp = e.competitions?.[0];
+      const home = comp?.competitors?.find(c => c.homeAway === "home");
+      const away = comp?.competitors?.find(c => c.homeAway === "away");
+      const homeName = espnTeamName(home?.team?.displayName || "");
+      const awayName = espnTeamName(away?.team?.displayName || "");
+      const dateRaw  = comp?.date || e.date;
+      const dateObj  = dateRaw ? new Date(dateRaw) : null;
+      const dateStr  = dateObj ? dateObj.toLocaleString("es-MX", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }) : "";
+      const dateInput = dateObj ? dateObj.toISOString().slice(0,16) : "";
+      const mk = buildMatchKey(homeName, awayName);
+      const exists = existingKeys.has(mk);
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:${exists?"rgba(57,255,20,0.05)":"rgba(255,255,255,0.04)"};border:1px solid ${exists?"rgba(57,255,20,0.2)":"rgba(255,255,255,0.08)"};border-radius:10px;padding:10px 14px;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#fff">${esc(homeName)} vs ${esc(awayName)}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">${dateStr}</div>
+          </div>
+          ${exists
+            ? `<span style="font-size:11px;color:#39FF14;font-weight:700;flex-shrink:0">✓ Ya cargado</span>`
+            : `<button onclick="fillMatchFromESPN('${esc(homeName)}','${esc(awayName)}','${dateInput}')"
+                style="background:#39FF14;color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+                Seleccionar
+               </button>`
+          }
+        </div>`;
+    }).join("");
+
+  } catch(e) {
+    showToast("Error al conectar con ESPN: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Importar partidos desde ESPN`;
+  }
+};
+
+window.fillMatchFromESPN = (home, away, dateInput) => {
+  document.getElementById("matchHome").value  = home;
+  document.getElementById("matchAway").value  = away;
+  document.getElementById("matchDate").value  = dateInput;
+  document.getElementById("espnMatchList").style.display = "none";
+  document.getElementById("matchHome").scrollIntoView({ behavior: "smooth", block: "center" });
+  showToast(`✅ ${home} vs ${away} — ajusta semana y fase, luego guarda.`);
+};
+
 function renderMatchesList() {
   const container = document.getElementById("matchesList");
   if (!container) return;
