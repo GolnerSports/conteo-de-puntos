@@ -5,7 +5,7 @@
  *   • Imágenes / iconos → Cache-first (cambian poco, carga rápida)
  */
 
-const CACHE_NAME = 'golner-sports-v13';
+const CACHE_NAME = 'golner-sports-v14';
 
 const STATIC_ASSETS = [
   '/index.html',
