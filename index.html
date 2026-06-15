@@ -788,19 +788,15 @@
 
       const participant = allParticipants.find(p => {
         const idMatch    = (p.golnerId || "").toUpperCase() === rawId;
+        if (!idMatch) return false;
         const phoneStr   = (p.phone || "").replace(/\D/g, "");
-        const phoneMatch = phoneStr.endsWith(phone4);
-        return idMatch && phoneMatch;
+        // Si no tiene teléfono guardado, solo se requiere el ID
+        if (!phoneStr) return true;
+        return phoneStr.endsWith(phone4);
       });
 
       if (!participant) {
-        const found = allParticipants.find(p => (p.golnerId||"").toUpperCase() === rawId);
-        if (found) {
-          const stored = (found.phone||"").replace(/\D/g,"");
-          errEl.textContent = `Teléfono guardado: "${stored||"(vacío)"}" — Ingresaste: "${phone4}"`;
-        } else {
-          errEl.textContent = `ID "${rawId}" no encontrado.`;
-        }
+        errEl.textContent = "ID o teléfono incorrecto. Intenta de nuevo.";
         errEl.style.display = "block"; return;
       }
 
