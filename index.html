@@ -77,11 +77,20 @@
   <!-- ── HEADER ─────────────────────────────────────────────── -->
   <header class="site-header">
     <div class="header-inner">
-      <div class="brand">
+      <!-- Brand normal -->
+      <div class="brand" id="headerBrand">
         <div class="brand-icon"><i class="fa-solid fa-futbol"></i></div>
         <div class="brand-text">
           <span class="brand-name">GOLNER SPORTS</span>
           <span class="brand-sub">Quiniela Mundial 2026</span>
+        </div>
+      </div>
+      <!-- Brand participante (visible solo en Predicciones con sesión) -->
+      <div id="headerUser" style="display:none;align-items:center;gap:10px">
+        <div id="headerAvatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#39FF14,#1a8a00);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#000;flex-shrink:0"></div>
+        <div>
+          <div id="headerName" style="font-size:14px;font-weight:800;color:#fff;line-height:1.2"></div>
+          <div id="headerGolnerId" style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px"></div>
         </div>
       </div>
       <button id="menuBtn" onclick="toggleMenu()" aria-label="Menú">
@@ -255,32 +264,24 @@
       </div>
     </div>
     <div id="predView-content" style="display:none;padding:0">
-      <!-- Cabecera de usuario -->
-      <div style="padding:20px 16px 0">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div id="predUserAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#39FF14,#1a8a00);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#000;flex-shrink:0"></div>
-            <div>
-              <div id="predUserName" style="font-size:17px;font-weight:800;line-height:1.2"></div>
-              <div id="predUserId" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;letter-spacing:1px"></div>
-            </div>
-          </div>
-          <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer">
-            Cerrar sesión
-          </button>
-        </div>
-        <!-- Tarjeta de puntos totales -->
-        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <!-- Tarjeta de puntos totales -->
+      <div style="padding:16px 16px 0">
+        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:4px">Mis puntos totales</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:4px">Mis puntos totales</div>
             <div id="predTotalPts" style="font-size:38px;font-weight:900;color:#39FF14;line-height:1">0</div>
           </div>
-          <div style="text-align:right">
-            <div id="predRankBadge" style="font-size:11px;color:rgba(255,255,255,0.35)"></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+            <div id="predRankBadge"></div>
+            <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer">Cerrar sesión</button>
           </div>
         </div>
       </div>
       <div id="predMatchList"></div>
+      <!-- IDs ocultos para compatibilidad -->
+      <div id="predUserName" style="display:none"></div>
+      <div id="predUserId" style="display:none"></div>
+      <div id="predUserAvatar" style="display:none"></div>
     </div>
   </main>
 
@@ -752,6 +753,17 @@
       const isResultados = viewName === "resultados";
       const isPredicciones = viewName === "predicciones";
       document.body.classList.toggle("view-resultados-active", isResultados || isPredicciones);
+      // Cambiar header según vista
+      const session = getSession();
+      const showUserHeader = isPredicciones && session;
+      document.getElementById("headerBrand").style.display = showUserHeader ? "none" : "flex";
+      document.getElementById("headerUser").style.display  = showUserHeader ? "flex" : "none";
+      if (showUserHeader) {
+        const initials = (session.name||"").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+        document.getElementById("headerAvatar").textContent   = initials;
+        document.getElementById("headerName").textContent     = session.name || "";
+        document.getElementById("headerGolnerId").textContent = session.golnerId || "";
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
       closeMenu();
       if (viewName === "predicciones") renderPredView();
