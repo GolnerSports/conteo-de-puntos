@@ -123,6 +123,10 @@
       <a href="login.html" class="smenu-item">
         <i class="fa-solid fa-shield-halved"></i><span>Admin</span>
       </a>
+      <div class="smenu-divider" id="menuLogoutDivider" style="display:none"></div>
+      <button class="smenu-item" id="menuLogoutBtn" style="display:none;color:#ef4444" onclick="logoutPred();closeMenu()">
+        <i class="fa-solid fa-right-from-bracket"></i><span>Cerrar sesión</span>
+      </button>
     </nav>
   </div>
 
@@ -264,22 +268,28 @@
       </div>
     </div>
     <div id="predView-content" style="display:none;padding:0">
-      <!-- Tarjeta de puntos totales -->
-      <div style="margin-top:-32px;padding:0 12px 0">
-        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:12px 16px;margin-bottom:8px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase">Mis puntos totales</div>
-            <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:3px 10px;font-size:10px;cursor:pointer;flex-shrink:0">Cerrar sesión</button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div id="predTotalPts" style="font-size:36px;font-weight:900;color:#39FF14;line-height:1">0</div>
-            <div id="predRankBadge" style="text-align:right"></div>
-          </div>
-          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:0 -16px -12px;display:flex" id="predStatsRow"></div>
+      <!-- Barra sticky de estadísticas -->
+      <div id="predStatsBar" style="position:sticky;top:56px;z-index:100;background:#0a120a;border-bottom:1px solid rgba(57,255,20,0.15);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span id="predTotalPts" style="font-size:22px;font-weight:900;color:#39FF14;line-height:1">0</span>
+          <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:0.5px">PTS</span>
+        </div>
+        <div style="width:1px;height:24px;background:rgba(255,255,255,0.1)"></div>
+        <div style="text-align:center">
+          <div id="predRankBadge" style="font-size:14px;font-weight:900;color:rgba(255,255,255,0.7)"></div>
+        </div>
+        <div style="width:1px;height:24px;background:rgba(255,255,255,0.1)"></div>
+        <div style="text-align:center">
+          <div id="predAciertos" style="font-size:14px;font-weight:900;color:#fff">—</div>
+          <div style="font-size:8px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35);margin-top:1px">ACIERTOS</div>
+        </div>
+        <div style="width:1px;height:24px;background:rgba(255,255,255,0.1)"></div>
+        <div style="text-align:center">
+          <div id="predExactos" style="font-size:14px;font-weight:900;color:#FFD700">—</div>
+          <div style="font-size:8px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35);margin-top:1px">EXACTOS 🎯</div>
         </div>
       </div>
       <div id="predMatchList"></div>
-      <!-- IDs ocultos para compatibilidad -->
       <div id="predUserName" style="display:none"></div>
       <div id="predUserId" style="display:none"></div>
       <div id="predUserAvatar" style="display:none"></div>
@@ -807,6 +817,9 @@
       // Restaurar header a GOLNER SPORTS
       document.getElementById("headerBrand").style.display = "flex";
       document.getElementById("headerUser").style.display  = "none";
+      // Ocultar cerrar sesión del menú
+      document.getElementById("menuLogoutBtn").style.display = "none";
+      document.getElementById("menuLogoutDivider").style.display = "none";
     };
 
     window.doAuth = () => {
@@ -972,22 +985,19 @@
       // Puntos totales en cabecera
       document.getElementById("predTotalPts").textContent = p.totalPoints || 0;
       const rank = allParticipants.slice().sort((a,b)=>(b.totalPoints||0)-(a.totalPoints||0)).findIndex(x=>x.id===p.id)+1;
-      document.getElementById("predRankBadge").innerHTML = `<div style="font-size:24px;font-weight:900;color:rgba(255,255,255,0.7);line-height:1">#${rank}</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">de ${allParticipants.length}</div>`;
+      document.getElementById("predRankBadge").innerHTML = `#${rank}<span style="font-size:10px;color:rgba(255,255,255,0.35);font-weight:400"> / ${allParticipants.length}</span>`;
 
       // Estadísticas: aciertos y marcadores exactos
       const playedBd = bd.filter(m => !m.pending && (m.hitWinner !== undefined));
       const aciertos = playedBd.filter(m => m.hitWinner).length;
       const exactos  = playedBd.filter(m => m.hitScore).length;
       const totalPlayed = playedBd.length;
-      document.getElementById("predStatsRow").innerHTML = `
-        <div style="flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.08);padding:10px 0">
-          <div style="font-size:22px;font-weight:900;color:#fff">${aciertos}<span style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:400"> / ${totalPlayed}</span></div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px;text-transform:uppercase">Aciertos</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:10px 0">
-          <div style="font-size:22px;font-weight:900;color:#FFD700">${exactos}<span style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:400"> / ${totalPlayed}</span></div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px;text-transform:uppercase">Marcador exacto</div>
-        </div>`;
+      document.getElementById("predAciertos").textContent = `${aciertos}/${totalPlayed}`;
+      document.getElementById("predExactos").textContent  = `${exactos}/${totalPlayed}`;
+
+      // Mostrar "Cerrar sesión" en el menú lateral
+      document.getElementById("menuLogoutBtn").style.display = "flex";
+      document.getElementById("menuLogoutDivider").style.display = "block";
 
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
 
