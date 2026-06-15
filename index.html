@@ -373,6 +373,8 @@
       if (!dataLoaded) { dataLoaded = true; clearTimeout(loadTimeout); }
       updateStatsBar();
       renderLeaderboard();
+      // Re-renderizar predicciones si el usuario tiene sesión activa
+      if (getSession()) renderPredView();
     });
 
     // ── ESPN LIVE SCORES ─────────────────────────────────────────
