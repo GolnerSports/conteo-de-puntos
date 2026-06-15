@@ -944,6 +944,8 @@
 
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
 
+      const activeMatches = window.activePredTab && groups[window.activePredTab] ? groups[window.activePredTab] : [];
+
       const cardBorder = m => m.pending ? "rgba(255,255,255,0.1)" : m.hitScore ? "#FFD700" : m.hitWinner ? "#39FF14" : "#ef4444";
       const cardBg     = m => m.pending ? "#0a0f0a" : m.hitScore ? "rgba(255,215,0,0.05)" : m.hitWinner ? "rgba(57,255,20,0.04)" : "rgba(239,68,68,0.04)";
 
