@@ -255,14 +255,30 @@
       </div>
     </div>
     <div id="predView-content" style="display:none;padding:0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:16px 16px 0">
-        <div>
-          <div id="predUserName" style="font-size:18px;font-weight:800"></div>
-          <div id="predUserId" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px"></div>
+      <!-- Cabecera de usuario -->
+      <div style="padding:20px 16px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div id="predUserAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#39FF14,#1a8a00);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#000;flex-shrink:0"></div>
+            <div>
+              <div id="predUserName" style="font-size:17px;font-weight:800;line-height:1.2"></div>
+              <div id="predUserId" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;letter-spacing:1px"></div>
+            </div>
+          </div>
+          <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer">
+            Cerrar sesión
+          </button>
         </div>
-        <button onclick="logoutPred()" style="background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">
-          Cerrar sesión
-        </button>
+        <!-- Tarjeta de puntos totales -->
+        <div id="predScoreCard" style="background:linear-gradient(135deg,#0f2010,#1a3a1a);border:1px solid rgba(57,255,20,0.2);border-radius:16px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:4px">Mis puntos totales</div>
+            <div id="predTotalPts" style="font-size:38px;font-weight:900;color:#39FF14;line-height:1">0</div>
+          </div>
+          <div style="text-align:right">
+            <div id="predRankBadge" style="font-size:11px;color:rgba(255,255,255,0.35)"></div>
+          </div>
+        </div>
       </div>
       <div id="predMatchList"></div>
     </div>
@@ -892,34 +908,96 @@
         window.activePredTab = sorted[sorted.length - 1] || null;
       }
 
+      // Banderas por equipo
+      const FLAG = {
+        "México":"🇲🇽","Mexico":"🇲🇽","Sudáfrica":"🇿🇦","Sudafrica":"🇿🇦",
+        "Canadá":"🇨🇦","Canada":"🇨🇦","Bosnia":"🇧🇦","EE.UU.":"🇺🇸","EEUU":"🇺🇸","Estados Unidos":"🇺🇸",
+        "Paraguay":"🇵🇾","Países Bajos":"🇳🇱","Paises Bajos":"🇳🇱","Japón":"🇯🇵","Japon":"🇯🇵",
+        "Catar":"🇶🇦","Qatar":"🇶🇦","Suiza":"🇨🇭","Australia":"🇦🇺","Turquía":"🇹🇷","Turquia":"🇹🇷",
+        "Corea del Sur":"🇰🇷","Chequia":"🇨🇿","República Checa":"🇨🇿","Republica Checa":"🇨🇿",
+        "Brasil":"🇧🇷","Brazil":"🇧🇷","Marruecos":"🇲🇦","Alemania":"🇩🇪","España":"🇪🇸","Francia":"🇫🇷",
+        "Argentina":"🇦🇷","Portugal":"🇵🇹","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Italia":"🇮🇹","Bélgica":"🇧🇪","Belgica":"🇧🇪",
+        "Croacia":"🇭🇷","Holanda":"🇳🇱","Dinamarca":"🇩🇰","Polonia":"🇵🇱","Senegal":"🇸🇳",
+        "Ghana":"🇬🇭","Camerún":"🇨🇲","Camerun":"🇨🇲","Nigeria":"🇳🇬","Mali":"🇲🇱",
+        "Arabia Saudita":"🇸🇦","Irán":"🇮🇷","Iran":"🇮🇷","Irak":"🇮🇶","Uruguay":"🇺🇾",
+        "Colombia":"🇨🇴","Chile":"🇨🇱","Ecuador":"🇪🇨","Venezuela":"🇻🇪","Perú":"🇵🇪","Peru":"🇵🇪",
+        "Bolivia":"🇧🇴","Costa Rica":"🇨🇷","Honduras":"🇭🇳","Jamaica":"🇯🇲","Panamá":"🇵🇦","Panama":"🇵🇦",
+        "Cuba":"🇨🇺","Haití":"🇭🇹","Haiti":"🇭🇹","Trinidad y Tobago":"🇹🇹",
+        "Nueva Zelanda":"🇳🇿","Serbia":"🇷🇸","Escocia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Gales":"🏴󠁧󠁢󠁷󠁬󠁳󠁿","Suecia":"🇸🇪",
+        "Noruega":"🇳🇴","Ucrania":"🇺🇦","Rumania":"🇷🇴","Austria":"🇦🇹","Eslovenia":"🇸🇮",
+        "Grecia":"🇬🇷","Turquía":"🇹🇷","Hungría":"🇭🇺","Albania":"🇦🇱",
+        "China":"🇨🇳","Indonesia":"🇮🇩","Vietnam":"🇻🇳","Tailandia":"🇹🇭",
+        "Empate":"⚖️"
+      };
+      const flag = name => FLAG[name] || "";
+
+      // Avatar iniciales
+      const initials = p.name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+      document.getElementById("predUserAvatar").textContent = initials;
+
+      // Puntos totales en cabecera
+      document.getElementById("predTotalPts").textContent = p.totalPoints || 0;
+      const rank = allParticipants.slice().sort((a,b)=>(b.totalPoints||0)-(a.totalPoints||0)).findIndex(x=>x.id===p.id)+1;
+      document.getElementById("predRankBadge").innerHTML = `<div style="font-size:22px;font-weight:900;color:rgba(255,255,255,0.6)">#${rank}</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">de ${allParticipants.length}</div>`;
+
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
-      const pts = m => m.pending ? `<span style="color:rgba(255,255,255,0.3);font-size:11px">Pendiente</span>`
-        : m.hitScore   ? `<span style="color:#39FF14;font-weight:800">5 pts 🎯</span>`
-        : m.hitWinner  ? `<span style="color:#39FF14;font-weight:700">3 pts ✅</span>`
-        : `<span style="color:#ef4444;font-weight:600">0 pts ❌</span>`;
+
+      const cardBorder = m => m.pending ? "rgba(255,255,255,0.1)" : m.hitScore ? "#FFD700" : m.hitWinner ? "#39FF14" : "#ef4444";
+      const cardBg     = m => m.pending ? "#0a0f0a" : m.hitScore ? "rgba(255,215,0,0.05)" : m.hitWinner ? "rgba(57,255,20,0.04)" : "rgba(239,68,68,0.04)";
+
+      const ptsBadge = m => {
+        if (m.pending) return `<span style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.5px">PENDIENTE</span>`;
+        if (m.hitScore)  return `<span style="background:rgba(255,215,0,0.15);color:#FFD700;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px">🎯 5 PTS</span>`;
+        if (m.hitWinner) return `<span style="background:rgba(57,255,20,0.12);color:#39FF14;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px">✅ 3 PTS</span>`;
+        return `<span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px">❌ 0 PTS</span>`;
+      };
+
+      const matchCards = activeMatches.map(m => {
+        const hFlag = flag(m.homeTeam), aFlag = flag(m.awayTeam);
+        const predScore = m.predHome !== null && m.predHome !== undefined ? `${m.predHome} - ${m.predAway}` : "—";
+        const realScore = !m.pending ? `${m.realHome} - ${m.realAway}` : null;
+        const predWinner = resultLabel(m.predResult, m.homeTeam, m.awayTeam);
+        return `
+        <div style="background:${cardBg(m)};border-left:3px solid ${cardBorder(m)};padding:14px 16px;margin-bottom:2px">
+          <!-- Equipos -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+              <span style="font-size:20px">${hFlag}</span>
+              <span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam}</span>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);padding:0 8px;flex-shrink:0">VS</span>
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;justify-content:flex-end">
+              <span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">${m.awayTeam}</span>
+              <span style="font-size:20px">${aFlag}</span>
+            </div>
+          </div>
+          <!-- Marcadores -->
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px">
+            <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-bottom:3px">MI PRED</div>
+              <div style="font-size:18px;font-weight:900;color:#fff">${predScore}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px">${predWinner !== "Empate" ? predWinner : "Empate"}</div>
+            </div>
+            <div style="font-size:16px;text-align:center">⚽</div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-bottom:3px">REAL</div>
+              <div style="font-size:18px;font-weight:900;color:#fff">${realScore || "—"}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px">&nbsp;</div>
+            </div>
+          </div>
+          <!-- Badge de puntos -->
+          <div style="display:flex;justify-content:flex-end">${ptsBadge(m)}</div>
+        </div>`;
+      }).join("");
 
       const tabBar = sorted.length > 1 ? `
-        <div class="results-tab-bar" style="margin-bottom:4px;padding:0 16px">
+        <div class="results-tab-bar" style="margin-bottom:0;padding:0 16px">
           ${sorted.map(t => `<button class="results-tab ${t === window.activePredTab ? "active" : ""}" data-ptab="${t}">${t}</button>`).join("")}
         </div>` : "";
 
-      const activeMatches = window.activePredTab && groups[window.activePredTab] ? groups[window.activePredTab] : [];
-
-      const matchCards = activeMatches.map(m => `
-        <div style="background:#0e1410;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);padding:14px 16px;margin-bottom:4px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:13px;font-weight:700">${m.homeTeam} vs ${m.awayTeam}</span>
-            ${pts(m)}
-          </div>
-          <div style="display:flex;gap:16px;font-size:12px;color:rgba(255,255,255,0.5)">
-            <span>Tu predicción: <strong style="color:#fff">${resultLabel(m.predResult, m.homeTeam, m.awayTeam)} ${m.predHome!==null&&m.predHome!==undefined?`${m.predHome}-${m.predAway}`:""}</strong></span>
-            ${!m.pending ? `<span>Real: <strong style="color:#fff">${m.realHome}-${m.realAway}</strong></span>` : ""}
-          </div>
-        </div>`).join("");
-
       const container = document.getElementById("predMatchList");
       container.innerHTML = sorted.length
-        ? tabBar + `<div style="padding-top:4px">${matchCards}</div>`
+        ? tabBar + `<div>${matchCards}</div>`
         : `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;font-size:14px">No hay predicciones registradas aún.</div>`;
 
       // Listeners pestañas
