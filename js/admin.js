@@ -1458,8 +1458,7 @@ function renderStats() {
         pct:   Math.round((hits / (matchTotals[key] || 1)) * 100)
       };
     })
-    .sort((a, b) => b.pct - a.pct)
-    .slice(0, 8);
+    .sort((a, b) => b.pct - a.pct);
 
   accContainer.innerHTML = accuracy.map(a => `
     <div class="accuracy-item">
