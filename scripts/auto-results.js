@@ -443,10 +443,13 @@ async function main() {
 
   // 3a. Marcar partidos en curso como "live" automáticamente
   for (const espn of inProgress) {
-    const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKey    = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKeyRev = buildMatchKey(espn.awayTeam,  espn.homeTeam);
     const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
-      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
+      m.matchKey === matchKeyRev ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKeyRev
     );
     if (fsMatch && !fsMatch.finalized) {
       const update = {
@@ -468,10 +471,13 @@ async function main() {
 
   // 3b. Verificar si hay partidos nuevos por procesar
   const newlyFinished = finished.filter(espn => {
-    const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKey    = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKeyRev = buildMatchKey(espn.awayTeam,  espn.homeTeam);
     const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
-      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
+      m.matchKey === matchKeyRev ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKeyRev
     );
     return fsMatch && !(fsMatch.played && fsMatch.finalized);
   });
@@ -515,13 +521,16 @@ async function main() {
   // 5. Procesar cada partido terminado
   let anyUpdated = false;
   for (const espn of finished) {
-    const matchKey = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKey    = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKeyRev = buildMatchKey(espn.awayTeam,  espn.homeTeam);
     console.log(`\n🔍 ${espn.homeTeam} ${espn.homeScore}-${espn.awayScore} ${espn.awayTeam}`);
     console.log(`   matchKey: ${matchKey}`);
 
     const fsMatch = allMatches.find(m =>
       m.matchKey === matchKey ||
-      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey
+      m.matchKey === matchKeyRev ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKeyRev
     );
 
     if (!fsMatch) {
