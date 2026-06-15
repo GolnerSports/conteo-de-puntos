@@ -385,6 +385,7 @@
         return (b.exactScores || 0) - (a.exactScores || 0);
       });
       allParticipants = raw.map((p, i) => ({ ...p, rank: i + 1 }));
+      window._golnerParticipants = allParticipants;
       if (!dataLoaded) { dataLoaded = true; clearTimeout(loadTimeout); }
       updateStatsBar();
       renderLeaderboard();
@@ -1254,8 +1255,9 @@
 
     // ── MODAL ESTADÍSTICAS ────────────────────────────────────────
     window.openStatsModal = () => {
+      const list = window._golnerParticipants || allParticipants || [];
       const matchHits = {}, matchTotal = {}, matchMeta = {};
-      for (const p of allParticipants) {
+      for (const p of list) {
         for (const m of (p.matchBreakdown || [])) {
           const k = m.matchKey;
           if (!k) continue;
