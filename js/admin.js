@@ -1112,7 +1112,10 @@ window.fetchESPNMatches = async () => {
           ${exists
             ? `<span style="font-size:11px;color:#39FF14;font-weight:700;flex-shrink:0">✓ Ya cargado</span>`
             : played
-              ? `<span style="font-size:11px;color:rgba(255,100,100,0.8);font-weight:700;flex-shrink:0">Ya jugado</span>`
+              ? `<button onclick="fillMatchFromESPN('${esc(homeName)}','${esc(awayName)}','${dateInput}')"
+                  style="background:rgba(255,100,100,0.15);color:#ff6464;border:1px solid rgba(255,100,100,0.3);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+                  Agregar
+                 </button>`
               : `<button onclick="fillMatchFromESPN('${esc(homeName)}','${esc(awayName)}','${dateInput}')"
                   style="background:#39FF14;color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
                   Seleccionar
