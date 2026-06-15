@@ -1405,40 +1405,44 @@
 
     // ── MODAL ESTADÍSTICAS ────────────────────────────────────────
     window.openStatsModal = () => {
-      // Calcular precisión por partido
-      const matchHits  = {}, matchTotal = {}, matchMeta = {};
-      for (const p of allParticipants) {
-        for (const m of (p.matchBreakdown || [])) {
-          const k = m.matchKey;
-          matchHits[k]  = (matchHits[k]  || 0) + (m.hitWinner ? 1 : 0);
-          matchTotal[k] = (matchTotal[k] || 0) + 1;
-          if (!matchMeta[k]) matchMeta[k] = { homeTeam: m.homeTeam, awayTeam: m.awayTeam };
+      try {
+        const matchHits = {}, matchTotal = {}, matchMeta = {};
+        for (const p of allParticipants) {
+          for (const m of (p.matchBreakdown || [])) {
+            const k = m.matchKey;
+            if (!k) continue;
+            matchHits[k]  = (matchHits[k]  || 0) + (m.hitWinner ? 1 : 0);
+            matchTotal[k] = (matchTotal[k] || 0) + 1;
+            if (!matchMeta[k]) matchMeta[k] = { homeTeam: m.homeTeam, awayTeam: m.awayTeam };
+          }
         }
-      }
-      const accuracy = Object.entries(matchTotal)
-        .map(([k, total]) => ({
-          key: k,
-          homeTeam: matchMeta[k]?.homeTeam || k,
-          awayTeam: matchMeta[k]?.awayTeam || "",
-          hits: matchHits[k] || 0,
-          total,
-          pct: Math.round(((matchHits[k]||0) / total) * 100)
-        }))
-        .sort((a, b) => b.pct - a.pct);
+        const accuracy = Object.entries(matchTotal)
+          .map(([k, total]) => ({
+            homeTeam: (matchMeta[k] || {}).homeTeam || k,
+            awayTeam: (matchMeta[k] || {}).awayTeam || "",
+            hits: matchHits[k] || 0,
+            total,
+            pct: Math.round(((matchHits[k]||0) / total) * 100)
+          }))
+          .sort((a, b) => b.pct - a.pct);
 
-      const rows = accuracy.map(m => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
-          <span style="font-size:13px;font-weight:600;color:#fff;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam} vs ${m.awayTeam}</span>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px">
-            <div style="width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
-              <div style="width:${m.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
+        const rows = accuracy.map(m => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <span style="font-size:13px;font-weight:600;color:#fff;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam} vs ${m.awayTeam}</span>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px">
+              <div style="width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
+                <div style="width:${m.pct}%;height:100%;background:#39FF14;border-radius:3px"></div>
+              </div>
+              <span style="font-size:13px;font-weight:800;color:#39FF14;width:36px;text-align:right">${m.pct}%</span>
             </div>
-            <span style="font-size:13px;font-weight:800;color:#39FF14;width:36px;text-align:right">${m.pct}%</span>
-          </div>
-        </div>`).join("");
+          </div>`).join("");
 
-      document.getElementById("statsModalBody").innerHTML = rows || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
-      document.getElementById("statsModal").style.display = "flex";
+        document.getElementById("statsModalBody").innerHTML = rows || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:40px 0">Sin datos aún</div>`;
+        const modal = document.getElementById("statsModal");
+        modal.style.display = "flex";
+      } catch(e) {
+        alert("Error: " + e.message);
+      }
     };
 
     window.closeStatsModal = () => {
