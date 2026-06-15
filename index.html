@@ -682,7 +682,7 @@
       const liveMatches = allMatchesData.filter(m => m.live && !m.played).map(m => {
         const key  = buildMatchKeyLocal(m.homeTeam, m.awayTeam);
         const espn = espnLiveScores[key];
-        return espn ? { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock, espnStatus: espn.status } : m;
+        return espn ? { ...m, liveHomeScore: espn.homeScore, liveAwayScore: espn.awayScore, espnClock: espn.clock, espnStatus: espn.statusType } : m;
       });
 
       // Partidos finalizados agrupados por pestaña
