@@ -979,7 +979,8 @@
         "Paraguay":"🇵🇾","Países Bajos":"🇳🇱","Paises Bajos":"🇳🇱","Japón":"🇯🇵","Japon":"🇯🇵",
         "Catar":"🇶🇦","Qatar":"🇶🇦","Suiza":"🇨🇭","Australia":"🇦🇺","Turquía":"🇹🇷","Turquia":"🇹🇷",
         "Corea del Sur":"🇰🇷","Chequia":"🇨🇿","República Checa":"🇨🇿","Republica Checa":"🇨🇿",
-        "Brasil":"🇧🇷","Brazil":"🇧🇷","Marruecos":"🇲🇦","Alemania":"🇩🇪","España":"🇪🇸","Francia":"🇫🇷",
+        "Brasil":"🇧🇷","Brazil":"🇧🇷","Marruecos":"🇲🇦","Alemania":"🇩🇪","España":"🇪🇸","Espana":"🇪🇸","Francia":"🇫🇷",
+        "Costa de Marfil":"🇨🇮","Ivory Coast":"🇨🇮","Curazao":"🇨🇼","Curaçao":"🇨🇼","Curacao":"🇨🇼",
         "Argentina":"🇦🇷","Portugal":"🇵🇹","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Italia":"🇮🇹","Bélgica":"🇧🇪","Belgica":"🇧🇪",
         "Croacia":"🇭🇷","Holanda":"🇳🇱","Dinamarca":"🇩🇰","Polonia":"🇵🇱","Senegal":"🇸🇳",
         "Ghana":"🇬🇭","Camerún":"🇨🇲","Camerun":"🇨🇲","Nigeria":"🇳🇬","Mali":"🇲🇱",
@@ -1003,6 +1004,13 @@
         "Empate":"⚖️"
       };
       const flag = name => FLAG[name] || "";
+      const DISPLAY_NAME = {
+        "Espana":"España","Tunez":"Túnez","Japon":"Japón","Belgica":"Bélgica",
+        "Turquia":"Turquía","Paises Bajos":"Países Bajos","Republica Checa":"Rep. Checa",
+        "Sudafrica":"Sudáfrica","Panama":"Panamá","Canada":"Canadá","Argelia":"Argelia",
+        "Arabia Saudi":"Arabia Saudita","Catar":"Qatar",
+      };
+      const displayName = name => DISPLAY_NAME[name] || name;
 
       // Avatar iniciales
       const initials = p.name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
@@ -1049,9 +1057,9 @@
           <!-- Fila 1: equipos -->
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px">
             <span style="font-size:15px">${hFlag}</span>
-            <span style="font-size:12px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.homeTeam}</span>
+            <span style="font-size:12px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${displayName(m.homeTeam)}</span>
             <span style="font-size:9px;color:rgba(255,255,255,0.3);flex-shrink:0">vs</span>
-            <span style="font-size:12px;font-weight:700;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.awayTeam}</span>
+            <span style="font-size:12px;font-weight:700;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${displayName(m.awayTeam)}</span>
             <span style="font-size:15px">${aFlag}</span>
           </div>
           <!-- Fila 2: predicción y resultado alineados -->
