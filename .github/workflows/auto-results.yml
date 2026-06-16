@@ -29,6 +29,10 @@ jobs:
           restore-keys: |
             firestore-cache-
 
+      - name: Clear cache on manual run
+        if: github.event_name == 'workflow_dispatch'
+        run: rm -f scripts/firestore-cache.json
+
       - name: Install dependencies
         run: npm install
         working-directory: scripts
