@@ -53,6 +53,7 @@ const ESPN_MAP = {
   "iraq":"Irak","irak":"Irak",
   "qatar":"Catar","katar":"Catar","catar":"Catar","قطر":"Catar",
   "new zealand":"Nueva Zelanda","nueva zelanda":"Nueva Zelanda",
+  "n. zelanda":"Nueva Zelanda","n zelanda":"Nueva Zelanda","nva zelanda":"Nueva Zelanda","nva. zelanda":"Nueva Zelanda",
   "panama":"Panama","panamá":"Panama",
   "croatia":"Croacia","croacia":"Croacia",
   "france":"Francia","francia":"Francia",
