@@ -924,11 +924,9 @@
         const sec = match.phase === "groups" ? `Semana ${match.week||1}` : (PHASE_MAP_P[match.phase] || match.phase || "Semana 1");
         const preds = p.predictions || {};
         const predEntry = Object.values(preds).find(pr => {
-          const normPr = normalize(pr.homeTeam||"") + "_vs_" + normalize(pr.awayTeam||"");
-          const normMt = normalize(match.homeTeam||"") + "_vs_" + normalize(match.awayTeam||"");
-          return normPr === normMt
-            || pr.matchKey === match.matchKey
-            || normalize(pr.matchKey||"") === normalize(match.matchKey||"");
+          const normPr = normalizeTeam(pr.homeTeam||"") + "_vs_" + normalizeTeam(pr.awayTeam||"");
+          const normMt = normalizeTeam(match.homeTeam||"") + "_vs_" + normalizeTeam(match.awayTeam||"");
+          return normPr === normMt || pr.matchKey === match.matchKey;
         });
         if (!predEntry) continue;
         if (!groups[sec]) groups[sec] = [];
