@@ -27,7 +27,7 @@ const CANONICAL = new Set([
   "Arabia Saudi","Argelia","Argentina","Australia","Austria",
   "Belgica","Bosnia","Brasil","Cabo Verde","Canada",
   "Corea del Sur","Costa de Marfil","Croacia","Catar","Curazao",
-  "Ecuador","Egipto","Escocia","Espana","Estados Unidos",
+  "Colombia","Ecuador","Egipto","Escocia","Espana","Estados Unidos",
   "Francia","Alemania","Ghana","Haiti","Inglaterra",
   "Irak","Iran","Japon","Jordania","Marruecos",
   "Mexico","Nigeria","Noruega","Nueva Zelanda","Nueva Caledonia",

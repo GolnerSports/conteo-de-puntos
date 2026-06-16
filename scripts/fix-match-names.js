@@ -25,15 +25,15 @@ const db = admin.firestore();
 
 // Mapa completo ESPN inglés → español correcto
 const ESPN_MAP = {
-  "united states":"Estados Unidos","usa":"Estados Unidos",
+  "united states":"Estados Unidos","usa":"Estados Unidos","ee.uu.":"Estados Unidos","ee uu":"Estados Unidos","eeuu":"Estados Unidos","eua":"Estados Unidos",
   "saudi arabia":"Arabia Saudi","arabia saudita":"Arabia Saudi",
   "czechia":"Republica Checa","czech republic":"Republica Checa","chequia":"Republica Checa","república checa":"Republica Checa","republica checa":"Republica Checa",
   "south korea":"Corea del Sur","korea republic":"Corea del Sur",
   "ivory coast":"Costa de Marfil","cote d'ivoire":"Costa de Marfil",
-  "south africa":"Sudafrica","sudáfrica":"Sudafrica",
+  "south africa":"Sudafrica","sudáfrica":"Sudafrica","sudafrica":"Sudafrica",
   "dr congo":"RD Congo","congo dr":"RD Congo","rd congo":"RD Congo","república democrática del congo":"RD Congo","republica democratica del congo":"RD Congo",
   "bosnia-herzegovina":"Bosnia","bosnia and herzegovina":"Bosnia","bosnia herzegovina":"Bosnia","bosnia y herzegovina":"Bosnia","bosnia & herzegovina":"Bosnia",
-  "turkiye":"Turquia","turkey":"Turquia","turquía":"Turquia",
+  "turkiye":"Turquia","turkey":"Turquia","turquía":"Turquia","turquia":"Turquia",
   "netherlands":"Paises Bajos","holland":"Paises Bajos","países bajos":"Paises Bajos","paises bajos":"Paises Bajos",
   "algeria":"Argelia","argelia":"Argelia",
   "germany":"Alemania","alemania":"Alemania",
