@@ -124,6 +124,8 @@ const TEAM_ALIASES = {
   "ee uu":                 "estados unidos",
   "ee.uu":                 "estados unidos",
   "usa":                   "estados unidos",
+  "us":                    "estados unidos",
+  "cote divoire":          "costa de marfil",
   "eeuu":                  "estados unidos",
   "corea sur":             "corea del sur",
   "corea norte":           "corea del norte",
