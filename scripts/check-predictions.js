@@ -27,7 +27,7 @@ const ESPN_NAME_MAP = {
   "united states": "estados unidos", "usa": "estados unidos", "ee.uu.": "estados unidos",
   "ee uu": "estados unidos", "eeuu": "estados unidos", "eua": "estados unidos",
   "saudi arabia": "arabia saudi", "arabia saudita": "arabia saudi",
-  "czechia": "republica checa", "czech republic": "republica checa", "chequia": "republica checa",
+  "czechia": "republica checa", "czech republic": "republica checa", "chequia": "republica checa", "rep. checa": "republica checa", "rep checa": "republica checa",
   "south korea": "corea del sur", "korea republic": "corea del sur", "korea": "corea del sur",
   "ivory coast": "costa de marfil", "cote d'ivoire": "costa de marfil",
   "south africa": "sudafrica",

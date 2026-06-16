@@ -88,7 +88,10 @@ const ESPN_NAME_MAP = {
   // ── República Checa ──
   "czechia":                "republica checa",
   "czech republic":         "republica checa",
-  "chequia":                "republica checa",   // variante usada en semana 1
+  "chequia":                "republica checa",
+  "rep. checa":             "republica checa",
+  "rep checa":              "republica checa",
+  "república checa":        "republica checa",
 
   // ── Corea del Sur ──
   "south korea":            "corea del sur",
