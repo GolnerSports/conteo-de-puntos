@@ -119,6 +119,8 @@ const ESPN_NAME_MAP = {
   "bosnia and herzegovina": "bosnia",
   "bosnia & herzegovina":   "bosnia",
   "bosnia herzegovina":     "bosnia",
+  "bosnia herz":            "bosnia",
+  "bosnia herz.":           "bosnia",
 
   // ── Turquía ──
   "turkiye":                "turquia",
