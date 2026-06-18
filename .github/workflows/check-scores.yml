@@ -1,0 +1,30 @@
+name: Check & Fix Score Types - GOLNER SPORTS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-scores:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: scripts
+
+      - name: Run check-scores script
+        env:
+          SA_PRIVATE_KEY_ID: ${{ secrets.SA_PRIVATE_KEY_ID }}
+          SA_PRIVATE_KEY:    ${{ secrets.SA_PRIVATE_KEY }}
+          SA_CLIENT_EMAIL:   ${{ secrets.SA_CLIENT_EMAIL }}
+          SA_CLIENT_ID:      ${{ secrets.SA_CLIENT_ID }}
+        run: node scripts/check-scores.js
