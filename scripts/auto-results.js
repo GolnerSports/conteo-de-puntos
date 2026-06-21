@@ -209,6 +209,8 @@ function calcParticipantTotal(predictions, allResults) {
   const phasePoints = {};
   const matchBreakdown = [];
   let totalPoints = 0;
+  let exactScores = 0;
+  let correctResults = 0;
 
   // Indexar predicciones usando TANTO la clave del dict como el campo matchKey interno
   const predMap = {};
@@ -234,6 +236,8 @@ function calcParticipantTotal(predictions, allResults) {
     const pred = predMap[matchKey] || predMap[altKey] || { prediction: null, homeScore: null, awayScore: null };
     const pts  = calcMatchPoints(pred, real);
     totalPoints += pts.total;
+    if (pts.hitScore)  exactScores++;
+    if (pts.hitWinner) correctResults++;
     const week  = real.week;
     if (week && weekPoints[week] !== undefined) weekPoints[week] += pts.total;
     const phase = real.phase || "groups";
@@ -245,7 +249,7 @@ function calcParticipantTotal(predictions, allResults) {
       predResult: pred.prediction, realResult: real.result
     });
   }
-  return { totalPoints, weekPoints, phasePoints, matchBreakdown };
+  return { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults };
 }
 
 // ── ESPN ──────────────────────────────────────────────────────────────────────
@@ -517,8 +521,8 @@ async function main() {
     if (Object.keys(allResults).length > 0) {
       console.log("🔄 Recalculando puntos de todos los participantes...");
       const updates = allParticipants.map(p => {
-        const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-        return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+        const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } = calcParticipantTotal(p.predictions || {}, allResults);
+        return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
       });
       await commitInBatches(db, updates);
       console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
@@ -590,8 +594,8 @@ async function main() {
 
     // Recalcular puntos de todos los participantes
     const updates = allParticipants.map(p => {
-      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+      const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } = calcParticipantTotal(p.predictions || {}, allResults);
+      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
     });
     await commitInBatches(db, updates);
     console.log(`  👥 ${allParticipants.length} participantes actualizados`);
@@ -609,8 +613,8 @@ async function main() {
   if (!anyUpdated && Object.keys(allResults).length > 0) {
     console.log("🔄 Recalculando puntos de todos los participantes...");
     const updates = allParticipants.map(p => {
-      const { totalPoints, weekPoints, phasePoints, matchBreakdown } = calcParticipantTotal(p.predictions || {}, allResults);
-      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
+      const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } = calcParticipantTotal(p.predictions || {}, allResults);
+      return { ref: db.collection("participants").doc(p.id), data: { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: admin.firestore.FieldValue.serverTimestamp() } };
     });
     await commitInBatches(db, updates);
     console.log(`  ✅ ${allParticipants.length} participantes recalculados`);
