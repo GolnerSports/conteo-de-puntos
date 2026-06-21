@@ -320,7 +320,9 @@ onSnapshot(
     raw.sort((a, b) => {
       const ptsDiff = (b.totalPoints || 0) - (a.totalPoints || 0);
       if (ptsDiff !== 0) return ptsDiff;
-      return (b.exactScores || 0) - (a.exactScores || 0);
+      const exactDiff = (b.exactScores || 0) - (a.exactScores || 0);
+      if (exactDiff !== 0) return exactDiff;
+      return (b.correctResults || 0) - (a.correctResults || 0);
     });
     allParticipants = raw.map((p, i) => ({ ...p, rank: i + 1 }));
     renderParticipantsTable();
@@ -531,7 +533,7 @@ async function saveParticipant(parsed) {
 
   // Calcular puntos con TODAS las predicciones combinadas
   const allPredsList = Object.values(mergedPredictions);
-  const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
+  const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
     GolnerScoring.calcParticipantTotal(allPredsList, allResults);
 
   const participantData = {
@@ -636,6 +638,9 @@ function renderParticipantsTable() {
           <button class="btn-icon" title="Editar nombre" onclick="editParticipantName('${p.id}','${esc(p.name)}')">
             <i class="fa-solid fa-pen"></i>
           </button>
+          <button class="btn-icon" title="Editar quiniela" onclick="openEditPredModal('${p.id}')" style="color:#fbbf24">
+            <i class="fa-solid fa-list-check"></i>
+          </button>
           <button class="btn-icon" title="Editar teléfono" onclick="editParticipantPhone('${p.id}','${esc(p.phone||'')}')">
             <i class="fa-solid fa-phone"></i>
           </button>
@@ -686,10 +691,10 @@ document.getElementById("recalcAllBtn").addEventListener("click", async () => {
 
   for (const p of allParticipants) {
     const preds = Object.values(p.predictions || {});
-    const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
+    const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
       GolnerScoring.calcParticipantTotal(preds, allResults);
     batch.update(doc(db, "participants", p.id), {
-      totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: serverTimestamp()
+      totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: serverTimestamp()
     });
   }
   await batch.commit();
@@ -701,10 +706,10 @@ window.recalcParticipant = async (id) => {
   const p = allParticipants.find(x => x.id === id);
   if (!p) return;
   const preds = Object.values(p.predictions || {});
-  const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
+  const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
     GolnerScoring.calcParticipantTotal(preds, allResults);
   await updateDoc(doc(db, "participants", id), {
-    totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: serverTimestamp()
+    totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: serverTimestamp()
   });
   showToast(`✅ ${p.name} recalculado.`);
 };
@@ -878,10 +883,10 @@ window.finalizeMatch = async (id) => {
   const batch = writeBatch(db);
   for (const p of allParticipants) {
     const preds = Object.values(p.predictions || {});
-    const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
+    const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
       GolnerScoring.calcParticipantTotal(preds, allResults);
     batch.update(doc(db, "participants", p.id), {
-      totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: serverTimestamp()
+      totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: serverTimestamp()
     });
   }
   await batch.commit();
@@ -983,10 +988,10 @@ window.deleteResult = (id, home, away) => {
       const batch = writeBatch(db);
       for (const p of allParticipants) {
         const preds = Object.values(p.predictions || {});
-        const { totalPoints, weekPoints, phasePoints, matchBreakdown } =
+        const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
           GolnerScoring.calcParticipantTotal(preds, allResults);
         batch.update(doc(db, "participants", p.id), {
-          totalPoints, weekPoints, phasePoints, matchBreakdown, updatedAt: serverTimestamp()
+          totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults, updatedAt: serverTimestamp()
         });
       }
       await batch.commit();
@@ -2152,3 +2157,180 @@ async function checkWeeklyReminders() {
     console.warn("checkWeeklyReminders error:", e.message);
   }
 }
+
+// ══════════════════════════════════════════════════════════════════
+// EDIT PREDICTIONS MODAL
+// ══════════════════════════════════════════════════════════════════
+
+let _editPredParticipantId = null;
+let _editPredData = []; // array of { matchKey, homeTeam, awayTeam, homeScore, awayScore, prediction }
+
+window.openEditPredModal = (id) => {
+  const p = allParticipants.find(x => x.id === id);
+  if (!p) return;
+
+  _editPredParticipantId = id;
+  _editPredData = [];
+
+  // Build matchKey → match lookup
+  const matchByKey = {};
+  for (const m of allMatches) {
+    if (m.matchKey) matchByKey[m.matchKey] = m;
+  }
+
+  // Figure out which matchKeys have already been played (have real results)
+  const playedKeys = new Set((p.matchBreakdown || []).map(m => m.matchKey));
+
+  // Collect pending predictions
+  const sectionOrder = ["Semana 1","Semana 2","Semana 3",
+    "Dieciseisavos","Octavos","Cuartos","Semifinal","Final"];
+  const groups = {};
+
+  for (const [matchKey, pred] of Object.entries(p.predictions || {})) {
+    // Skip already played
+    if (playedKeys.has(matchKey)) continue;
+    const normMK = pred.homeTeam && pred.awayTeam
+      ? normTeam(pred.homeTeam) + "_vs_" + normTeam(pred.awayTeam) : matchKey;
+    if (playedKeys.has(normMK)) continue;
+
+    const match = matchByKey[matchKey] || fuzzyFindInMatches({ ...pred, matchKey }, allMatches);
+    const phase = match?.phase || pred.phase || "groups";
+    const week  = match?.week  || pred.week  || 1;
+    const section = phase === "groups" ? `Semana ${week}` : phaseLabel(phase);
+
+    _editPredData.push({
+      matchKey,
+      homeTeam: pred.homeTeam || match?.homeTeam || matchKey,
+      awayTeam: pred.awayTeam || match?.awayTeam || "",
+      homeScore: pred.homeScore ?? "",
+      awayScore: pred.awayScore ?? "",
+      prediction: pred.prediction || "",
+      section,
+      date: match?.date || pred.date || "",
+    });
+    if (!groups[section]) groups[section] = [];
+    groups[section].push(_editPredData[_editPredData.length - 1]);
+  }
+
+  // Render
+  document.getElementById("editPredTitle").textContent = `Editar Quiniela — ${p.name}`;
+  const pending = _editPredData.length;
+  document.getElementById("editPredSubtitle").textContent =
+    pending ? `${pending} partido${pending !== 1 ? "s" : ""} pendiente${pending !== 1 ? "s" : ""}` : "Sin partidos pendientes";
+
+  const body = document.getElementById("editPredBody");
+
+  if (!pending) {
+    body.innerHTML = `<p style="color:rgba(255,255,255,0.35);text-align:center;padding:32px 0;font-size:13px">No hay predicciones pendientes para editar.</p>`;
+  } else {
+    const sortedSections = Object.keys(groups).sort((a, b) => {
+      return (sectionOrder.indexOf(a) || 99) - (sectionOrder.indexOf(b) || 99);
+    });
+
+    let html = "";
+    for (const section of sortedSections) {
+      html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;color:rgba(57,255,20,0.7);text-transform:uppercase;padding:6px 0 4px">${section}</div>`;
+      // Sort by date
+      groups[section].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      for (const item of groups[section]) {
+        const idx = _editPredData.indexOf(item);
+        html += `
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px">
+            <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:10px">
+              ${esc(item.homeTeam)} <span style="color:rgba(255,255,255,0.3)">vs</span> ${esc(item.awayTeam)}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1">
+                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Local</div>
+                <input type="number" min="0" max="99" data-pred-idx="${idx}" data-field="homeScore"
+                  value="${item.homeScore !== "" ? item.homeScore : ""}"
+                  placeholder="0"
+                  style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:7px;padding:8px 10px;color:#fff;font-size:18px;font-weight:800;font-family:var(--font-display,monospace);text-align:center;-moz-appearance:textfield"
+                  oninput="updateEditPredField(${idx},'homeScore',this.value)" />
+              </div>
+              <div style="font-size:20px;font-weight:900;color:rgba(255,255,255,0.25);padding-top:18px">:</div>
+              <div style="flex:1">
+                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Visitante</div>
+                <input type="number" min="0" max="99" data-pred-idx="${idx}" data-field="awayScore"
+                  value="${item.awayScore !== "" ? item.awayScore : ""}"
+                  placeholder="0"
+                  style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:7px;padding:8px 10px;color:#fff;font-size:18px;font-weight:800;font-family:var(--font-display,monospace);text-align:center;-moz-appearance:textfield"
+                  oninput="updateEditPredField(${idx},'awayScore',this.value)" />
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+    body.innerHTML = html;
+  }
+
+  // Show modal
+  const modal = document.getElementById("editPredModal");
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+  requestAnimationFrame(() => modal.style.opacity = "1");
+};
+
+window.updateEditPredField = (idx, field, value) => {
+  if (_editPredData[idx]) {
+    _editPredData[idx][field] = value === "" ? "" : parseInt(value, 10);
+  }
+};
+
+window.closeEditPredModal = () => {
+  const modal = document.getElementById("editPredModal");
+  modal.classList.add("hidden");
+  modal.style.display = "none";
+  _editPredParticipantId = null;
+  _editPredData = [];
+};
+
+window.saveEditedPredictions = async () => {
+  if (!_editPredParticipantId) return;
+  const p = allParticipants.find(x => x.id === _editPredParticipantId);
+  if (!p) return;
+
+  const btn = document.getElementById("editPredSaveBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando…`;
+
+  try {
+    // Build updated predictions object
+    const newPredictions = { ...(p.predictions || {}) };
+
+    for (const item of _editPredData) {
+      const existing = newPredictions[item.matchKey];
+      if (!existing) continue;
+
+      const homeScore = item.homeScore !== "" ? parseInt(item.homeScore, 10) : null;
+      const awayScore = item.awayScore !== "" ? parseInt(item.awayScore, 10) : null;
+
+      // Re-compute prediction direction
+      let prediction = existing.prediction || "";
+      if (homeScore !== null && awayScore !== null) {
+        if (homeScore > awayScore)       prediction = "home";
+        else if (awayScore > homeScore)  prediction = "away";
+        else                             prediction = "draw";
+      }
+
+      newPredictions[item.matchKey] = {
+        ...existing,
+        homeScore,
+        awayScore,
+        prediction,
+      };
+    }
+
+    await updateDoc(doc(db, "participants", _editPredParticipantId), {
+      predictions: newPredictions,
+    });
+
+    showToast(`✅ Quiniela de ${p.name} actualizada`, "success");
+    closeEditPredModal();
+  } catch (e) {
+    console.error(e);
+    showToast("Error al guardar: " + e.message, "error");
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar cambios`;
+  }
+};

@@ -84,6 +84,8 @@ const GolnerScoring = (() => {
     const phasePoints = {};
     const matchBreakdown = [];
     let totalPoints = 0;
+    let exactScores = 0;
+    let correctResults = 0;
 
     // Crear mapa de predicciones con triple-indexación para máxima cobertura:
     // 1. Por matchKey interno del objeto predicción
@@ -111,6 +113,8 @@ const GolnerScoring = (() => {
       const pts  = calcMatchPoints(pred, real);
 
       totalPoints += pts.total;
+      if (pts.hitScore)  exactScores++;
+      if (pts.hitWinner) correctResults++;
 
       // Puntos por semana (solo fase de grupos)
       const week = real.week;
@@ -138,7 +142,7 @@ const GolnerScoring = (() => {
       });
     }
 
-    return { totalPoints, weekPoints, phasePoints, matchBreakdown };
+    return { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults };
   }
 
   /**
