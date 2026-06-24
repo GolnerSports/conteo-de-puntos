@@ -692,7 +692,9 @@
     });
 
     // Cuántos están EN RIESGO según la fase
-    const PHASE_RISK_MAP = { groups: 10, round_of_16: 10, round_of_8: 10, quarter_final: 15, semi_final: 10, final: 0 };
+    // Rank a partir del cual empieza EN RIESGO (absoluto, no relativo)
+    // Durante grupos: pasan los top 40, por lo tanto riesgo = rank > 40
+    const PHASE_RISK_CUTOFF = { groups: 40, round_of_16: 30, round_of_8: 20, quarter_final: 12, semi_final: 6, final: 0 };
 
     // ── RENDER LEADERBOARD ───────────────────────────────────────
     function renderLeaderboard() {
@@ -701,10 +703,8 @@
       const search  = (document.getElementById("searchInput").value || "").toLowerCase();
 
       const total       = allParticipants.length;
-      const atRiskCount = PHASE_RISK_MAP[tournamentConfig.phase || "groups"] || 0;
-      const activeCount = allParticipants.filter(p => p.status !== "eliminated").length;
-      // riskZone = el rank a partir del cual empieza EN RIESGO (los últimos atRiskCount)
-      const riskZone    = activeCount - atRiskCount;
+      // riskZone = rank a partir del cual empieza EN RIESGO (absoluto)
+      const riskZone    = PHASE_RISK_CUTOFF[tournamentConfig.phase || "groups"] || 0;
       const cutRank     = 0; // No se usa en fase de grupos
 
       const medals = ["🥇","🥈","🥉"];
@@ -794,8 +794,8 @@
       if (p.status === "classified")
         return { cls: "row-classified", badge: "classified", label: "Clasificado" };
 
-      // EN RIESGO = últimos atRiskCount por puntos
-      if (p.rank > riskZone && riskZone > 0)
+      // EN RIESGO = rank mayor al corte absoluto de la fase
+      if (riskZone > 0 && p.rank > riskZone)
         return { cls: "row-risk", badge: "risk", label: "En riesgo" };
 
       return { cls: "", badge: "active", label: "Activo" };
