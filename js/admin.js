@@ -690,7 +690,7 @@ document.getElementById("recalcAllBtn").addEventListener("click", async () => {
   const batch = writeBatch(db);
 
   for (const p of allParticipants) {
-    const preds = Object.values(p.predictions || {});
+    const preds = Object.entries(p.predictions || {}).map(([k, v]) => ({ matchKey: k, ...v }));
     const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
       GolnerScoring.calcParticipantTotal(preds, allResults);
     batch.update(doc(db, "participants", p.id), {
@@ -705,7 +705,7 @@ document.getElementById("recalcAllBtn").addEventListener("click", async () => {
 window.recalcParticipant = async (id) => {
   const p = allParticipants.find(x => x.id === id);
   if (!p) return;
-  const preds = Object.values(p.predictions || {});
+  const preds = Object.entries(p.predictions || {}).map(([k, v]) => ({ matchKey: k, ...v }));
   const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
     GolnerScoring.calcParticipantTotal(preds, allResults);
   await updateDoc(doc(db, "participants", id), {
@@ -882,7 +882,7 @@ window.finalizeMatch = async (id) => {
 
   const batch = writeBatch(db);
   for (const p of allParticipants) {
-    const preds = Object.values(p.predictions || {});
+    const preds = Object.entries(p.predictions || {}).map(([k, v]) => ({ matchKey: k, ...v }));
     const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
       GolnerScoring.calcParticipantTotal(preds, allResults);
     batch.update(doc(db, "participants", p.id), {
@@ -1112,7 +1112,7 @@ window.deleteResult = (id, home, away) => {
 
       const batch = writeBatch(db);
       for (const p of allParticipants) {
-        const preds = Object.values(p.predictions || {});
+        const preds = Object.entries(p.predictions || {}).map(([k, v]) => ({ matchKey: k, ...v }));
         const { totalPoints, weekPoints, phasePoints, matchBreakdown, exactScores, correctResults } =
           GolnerScoring.calcParticipantTotal(preds, allResults);
         batch.update(doc(db, "participants", p.id), {

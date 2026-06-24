@@ -89,7 +89,32 @@ const GolnerScoring = (() => {
 
     // Crear mapa de predicciones con indexación múltiple para máxima cobertura
     const predMap = {};
-    const normStr = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+    const ESPN_NAME_MAP = {
+      "united states":"estados unidos","usa":"estados unidos","czechia":"republica checa",
+      "czech republic":"republica checa","chequia":"republica checa","rep. checa":"republica checa",
+      "rep checa":"republica checa","república checa":"republica checa",
+      "south korea":"corea del sur","korea republic":"corea del sur","korea":"corea del sur",
+      "ivory coast":"costa de marfil","cote d'ivoire":"costa de marfil","cote divoire":"costa de marfil",
+      "saudi arabia":"arabia saudi","arabia saudita":"arabia saudi","south africa":"sudafrica",
+      "dr congo":"rd congo","congo dr":"rd congo","democratic republic of congo":"rd congo",
+      "drc":"rd congo","congo, dr":"rd congo",
+      "bosnia-herzegovina":"bosnia","bosnia and herzegovina":"bosnia","bosnia & herzegovina":"bosnia",
+      "bosnia herzegovina":"bosnia","bosnia herz":"bosnia","bosnia herz.":"bosnia",
+      "turkiye":"turquia","turkey":"turquia","netherlands":"paises bajos","holland":"paises bajos",
+      "algeria":"argelia","germany":"alemania","belgium":"belgica","switzerland":"suiza",
+      "sweden":"suecia","norway":"noruega","morocco":"marruecos","egypt":"egipto",
+      "tunisia":"tunez","cape verde":"cabo verde","curacao":"curazao","jordan":"jordania",
+      "scotland":"escocia","england":"inglaterra","haiti":"haiti","iran":"iran","iraq":"irak",
+      "austria":"austria","qatar":"catar","new zealand":"nueva zelanda","panama":"panama",
+      "croatia":"croacia","senegal":"senegal","colombia":"colombia","ghana":"ghana",
+      "portugal":"portugal","argentina":"argentina","france":"francia","spain":"espana",
+      "brazil":"brasil","ecuador":"ecuador","japan":"japon","mexico":"mexico","canada":"canada",
+      "australia":"australia","uruguay":"uruguay","uzbekistan":"uzbekistan","paraguay":"paraguay",
+    };
+    const normStr = s => {
+      const clean = (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      return ESPN_NAME_MAP[clean] || clean;
+    };
     const addPM = (key, val) => { if (key && key !== "_vs_") predMap[key] = val; };
 
     for (const p of predictions) {
