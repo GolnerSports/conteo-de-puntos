@@ -532,7 +532,12 @@
     });
 
     // Participants (sin orderBy para incluir los que no tienen totalPoints aún)
-    onSnapshot(collection(db, "participants"), snap => {
+    // includeMetadataChanges: true → nos avisa tanto del caché como del servidor
+    onSnapshot(collection(db, "participants"), { includeMetadataChanges: true }, snap => {
+      // Si los datos vienen del caché local (datos desactualizados), ignorarlos.
+      // Solo renderizar cuando llegan datos frescos del servidor.
+      if (snap.metadata.fromCache) return;
+
       const raw = snap.docs.map(d => ({ id: d.id, totalPoints: 0, ...d.data() }));
       // Ordenar por puntos y asignar rank client-side
       raw.sort((a, b) => {
