@@ -87,15 +87,27 @@ const GolnerScoring = (() => {
     let exactScores = 0;
     let correctResults = 0;
 
-    // Crear mapa de predicciones con triple-indexación para máxima cobertura:
-    // 1. Por matchKey interno del objeto predicción
-    // 2. Por clave normalizada (homeTeam_vs_awayTeam sin acentos)
+    // Crear mapa de predicciones con indexación múltiple para máxima cobertura
     const predMap = {};
     const normStr = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+    const addPM = (key, val) => { if (key && key !== "_vs_") predMap[key] = val; };
+
     for (const p of predictions) {
-      if (p.matchKey) predMap[p.matchKey] = p;
+      // 1. matchKey interno del objeto
+      if (p.matchKey) addPM(p.matchKey, p);
+      // 2. Normalizado por homeTeam/awayTeam
       const normKey = normStr(p.homeTeam||"") + "_vs_" + normStr(p.awayTeam||"");
-      if (normKey && normKey !== p.matchKey) predMap[normKey] = p;
+      if (normKey !== p.matchKey) addPM(normKey, p);
+      // 3. Re-normalizar el matchKey dividiéndolo por "_vs_"
+      //    Resuelve keys guardados con versión anterior de nombres de equipo
+      //    Ej: "suiza_vs_bosnia herz." → "suiza_vs_bosnia"
+      if (p.matchKey && p.matchKey.includes("_vs_")) {
+        const vsIdx = p.matchKey.indexOf("_vs_");
+        const rawHome = p.matchKey.slice(0, vsIdx).replace(/_/g, " ");
+        const rawAway = p.matchKey.slice(vsIdx + 4).replace(/_/g, " ");
+        const rNormKey = normStr(rawHome) + "_vs_" + normStr(rawAway);
+        if (rNormKey !== p.matchKey && rNormKey !== normKey) addPM(rNormKey, p);
+      }
     }
 
     // Iterar sobre resultados reales (deduplicando por homeTeam+awayTeam)

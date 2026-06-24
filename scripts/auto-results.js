@@ -212,15 +212,34 @@ function calcParticipantTotal(predictions, allResults) {
   let exactScores = 0;
   let correctResults = 0;
 
-  // Indexar predicciones usando TANTO la clave del dict como el campo matchKey interno
+  // Indexar predicciones con múltiples claves para máxima cobertura
   const predMap = {};
+  const addToPredMap = (key, val) => { if (key && key !== "_vs_") predMap[key] = val; };
+
   for (const [dictKey, p] of Object.entries(predictions)) {
-    const mk = p.matchKey || dictKey;  // usar clave del dict si el objeto no tiene matchKey
-    predMap[dictKey] = { ...p, matchKey: mk };
-    if (mk !== dictKey) predMap[mk] = { ...p, matchKey: mk };
-    // También indexar por matchKey normalizado (resuelve EE.UU. → estados unidos, etc.)
+    const mk = p.matchKey || dictKey;
+    const entry = { ...p, matchKey: mk };
+
+    // 1. Clave tal como está guardada en el dict
+    addToPredMap(dictKey, entry);
+    // 2. matchKey interno del objeto (si difiere)
+    if (mk !== dictKey) addToPredMap(mk, entry);
+    // 3. Normalizado por homeTeam/awayTeam (si existen en el objeto)
     const normKey = buildMatchKey(p.homeTeam || "", p.awayTeam || "");
-    if (normKey && normKey !== mk && normKey !== dictKey) predMap[normKey] = { ...p, matchKey: mk };
+    if (normKey !== mk && normKey !== dictKey) addToPredMap(normKey, entry);
+    // 4. Re-normalizar el dictKey dividiéndolo por "_vs_"
+    //    Resuelve casos donde el key fue guardado con nombres de equipo en versión anterior
+    //    Ej: "suiza_vs_bosnia herz." → "suiza_vs_bosnia"
+    //    Ej: "espana_vs_arabia saudita" → "espana_vs_arabia saudi"
+    if (dictKey.includes("_vs_")) {
+      const vsIdx = dictKey.indexOf("_vs_");
+      const rawHome = dictKey.slice(0, vsIdx).replace(/_/g, " ");
+      const rawAway = dictKey.slice(vsIdx + 4).replace(/_/g, " ");
+      const rNormKey = buildMatchKey(rawHome, rawAway);
+      if (rNormKey !== mk && rNormKey !== dictKey && rNormKey !== normKey) {
+        addToPredMap(rNormKey, entry);
+      }
+    }
   }
 
   // Deduplicar: allResults puede tener el mismo partido con dos claves distintas
