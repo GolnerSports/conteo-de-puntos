@@ -1503,7 +1503,7 @@
         font-size:13px; min-width:200px;
         pointer-events:none;
       `;
-      const statusInfo = getStatusInfo(p, Math.ceil(allParticipants.length * (tournamentConfig.cutoffPct || 0.4)), Math.ceil(Math.ceil(allParticipants.length * (tournamentConfig.cutoffPct || 0.4)) * 1.15));
+      const statusInfo = getStatusInfo(p, 0, PHASE_RISK_CUTOFF[tournamentConfig.phase || "groups"] || 0);
       const badgeColors = { active:"#ffaa00", risk:"#ff6600", classified:"#39FF14", eliminated:"#ff4444" };
       const badgeColor = badgeColors[statusInfo.badge] || "#fff";
 
