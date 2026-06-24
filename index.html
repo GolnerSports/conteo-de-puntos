@@ -838,18 +838,32 @@
       const homeWin = m.result === "home";
       const awayWin = m.result === "away";
       const isDraw  = m.result === "draw";
+      const isAET   = m.statusType === "STATUS_FINAL_AET";
+      const isPEN   = m.statusType === "STATUS_FINAL_PEN";
+      // m.homeScore/awayScore = marcador a 90 min (para quiniela)
+      // m.finalHomeScore/finalAwayScore = marcador final ESPN (T.E. o Pen.)
+      const extraLabel = isAET
+        ? `<div class="mini-extra-score">T.E. ${m.finalHomeScore ?? m.homeScore}-${m.finalAwayScore ?? m.awayScore}</div>`
+        : isPEN
+        ? `<div class="mini-extra-score">Pen. ${m.finalHomeScore ?? m.homeScore}-${m.finalAwayScore ?? m.awayScore}</div>`
+        : "";
+      const statusText = isDraw ? "Empate" : isAET ? "Tiempo Extra" : isPEN ? "Penales" : "Finalizado";
+      const statusClass = isDraw ? "mini-draw" : "mini-status";
       return `
         <div class="result-card-mini">
           <div class="mini-flags">
             <span class="mini-flag">${flag(m.homeTeam)}</span>
-            <span class="mini-score">${m.homeScore}-${m.awayScore}</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+              <span class="mini-score">${m.homeScore}-${m.awayScore}</span>
+              ${extraLabel}
+            </div>
             <span class="mini-flag">${flag(m.awayTeam)}</span>
           </div>
           <div class="mini-teams">
             <span class="mini-name ${homeWin ? "winner" : ""}">${escHtml(m.homeTeam)}</span>
             <span class="mini-name ${awayWin ? "winner" : ""}" style="text-align:right">${escHtml(m.awayTeam)}</span>
           </div>
-          ${isDraw ? `<div class="mini-draw">Empate</div>` : `<div class="mini-status">Finalizado</div>`}
+          <div class="${statusClass}">${statusText}</div>
         </div>`;
     }
 
@@ -1286,6 +1300,16 @@
         const predScore = m.predHome !== null && m.predHome !== undefined ? `${m.predHome} - ${m.predAway}` : "—";
         const realScore = !m.pending ? `${m.realHome} - ${m.realAway}` : null;
         const predWinner = resultLabel(m.predResult, m.homeTeam, m.awayTeam);
+        // Buscar datos de T.E./Penales desde allMatchesData
+        const matchMeta = allMatchesData.find(x =>
+          buildMatchKeyLocal(x.homeTeam, x.awayTeam) === m.matchKey ||
+          x.homeTeam === m.homeTeam && x.awayTeam === m.awayTeam
+        ) || {};
+        const isAET = matchMeta.statusType === "STATUS_FINAL_AET";
+        const isPEN = matchMeta.statusType === "STATUS_FINAL_PEN";
+        const extraTag = !m.pending && (isAET || isPEN) && matchMeta.finalHomeScore != null
+          ? `<span style="font-size:9px;color:rgba(255,200,50,0.8);font-weight:700;margin-left:6px">${isAET ? "T.E." : "Pen."} ${matchMeta.finalHomeScore}-${matchMeta.finalAwayScore}</span>`
+          : "";
         return `
         <div style="background:${cardBg(m)};border-left:3px solid ${cardBorder(m)};padding:10px 16px;margin-bottom:2px">
           <!-- Fila 1: equipos -->
@@ -1305,7 +1329,7 @@
               </div>
               <div style="display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px">
                 <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.35)">REAL</span>
-                <span style="font-size:14px;font-weight:900;color:${m.pending ? "rgba(255,255,255,0.2)" : "#fff"};font-variant-numeric:tabular-nums">${m.pending ? "—" : realScore}</span>
+                <span style="font-size:14px;font-weight:900;color:${m.pending ? "rgba(255,255,255,0.2)" : "#fff"};font-variant-numeric:tabular-nums">${m.pending ? "—" : realScore}${extraTag}</span>
               </div>
             </div>
             <div style="flex-shrink:0;margin-left:10px">${ptsBadge(m)}</div>
@@ -1688,13 +1712,24 @@
           if (m.matchKey === matchKey && !meta.homeTeam) {
             meta.homeTeam  = m.homeTeam || matchKey;
             meta.awayTeam  = m.awayTeam || "";
-            meta.homeScore = m.homeScore;
-            meta.awayScore = m.awayScore;
+            meta.homeScore = m.realHome;  // 90-min score
+            meta.awayScore = m.realAway;
           }
         }
       }
-      const label     = `${meta.homeTeam || matchKey} vs ${meta.awayTeam || ""}`;
-      const realScore = meta.homeScore !== undefined ? `${meta.homeScore}-${meta.awayScore}` : "";
+      // Buscar datos adicionales (T.E./Pen.) desde allMatchesData
+      const matchData = allMatchesData.find(x =>
+        buildMatchKeyLocal(x.homeTeam, x.awayTeam) === matchKey ||
+        (x.homeTeam === meta.homeTeam && x.awayTeam === meta.awayTeam)
+      ) || {};
+      const isAET = matchData.statusType === "STATUS_FINAL_AET";
+      const isPEN = matchData.statusType === "STATUS_FINAL_PEN";
+      const label = `${meta.homeTeam || matchKey} vs ${meta.awayTeam || ""}`;
+      let realScore = meta.homeScore !== undefined ? `${meta.homeScore}-${meta.awayScore}` : "";
+      if (realScore && (isAET || isPEN) && matchData.finalHomeScore != null) {
+        const extraType = isAET ? "T.E." : "Pen.";
+        realScore += ` <span style="font-size:11px;color:rgba(255,200,50,0.9);font-weight:700">(${extraType} ${matchData.finalHomeScore}-${matchData.finalAwayScore})</span>`;
+      }
       const exact = [], winners = [], missed = [];
       for (const p of list) {
         const bd = (p.matchBreakdown || []).find(m => m.matchKey === matchKey);
