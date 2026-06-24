@@ -599,25 +599,39 @@ async function main() {
     const needsScore90 = isAET || isPEN;
 
     let finalHomeScore, finalAwayScore;
+    let score90Missing = false;
+
     if (needsScore90 && fsMatch.score90Home != null && fsMatch.score90Away != null) {
-      // Usar el marcador de 90 min guardado durante el segundo tiempo
+      // ✅ Caso normal: usar el marcador de 90 min guardado durante el segundo tiempo
       finalHomeScore = fsMatch.score90Home;
       finalAwayScore = fsMatch.score90Away;
       console.log(`  ⏱️  ${isAET ? "Tiempo extra" : "Penales"} — usando score90: ${finalHomeScore}-${finalAwayScore} (ESPN final: ${espn.homeScore}-${espn.awayScore})`);
     } else if (needsScore90) {
-      // score90 no disponible (edge case muy raro) — el partido estaba empatado
-      // a los 90 min (de lo contrario no habría tiempo extra/penales)
-      // Forzamos empate con el marcador de ESPN final solo como fallback
+      // ⚠️  FALLBACK: score90 no disponible (script estuvo inactivo durante el 2do tiempo).
+      // Un partido SOLO puede ir a T.E. o penales si estaba EMPATADO a los 90 min.
+      // → El resultado para quiniela SIEMPRE es "draw".
+      // Usamos el marcador ESPN pero FORZAMOS empate para que los puntos sean correctos:
+      //   - Quienes predijeron empate reciben 3 pts ✓
+      //   - Nadie recibe bonus de marcador exacto (score90 desconocido) ✓
+      //   - Nadie recibe puntos por "local" o "visitante" incorrectamente ✓
       finalHomeScore = espn.homeScore;
       finalAwayScore = espn.awayScore;
-      console.log(`  ⚠️  score90 no disponible para ${espn.homeTeam} vs ${espn.awayTeam}. Usando score de ESPN como fallback.`);
+      score90Missing = true;
+      console.log(`  🚨 ALERTA: score90 no disponible para ${espn.homeTeam} vs ${espn.awayTeam}.`);
+      console.log(`     Resultado forzado a EMPATE para proteger puntos. Revisar manualmente en admin.`);
     } else {
-      // Partido terminó en 90 min — score de ESPN es el correcto
+      // ✅ Partido terminó en 90 min — score de ESPN es el correcto
       finalHomeScore = espn.homeScore;
       finalAwayScore = espn.awayScore;
     }
 
-    const result = finalHomeScore > finalAwayScore ? "home" : finalAwayScore > finalHomeScore ? "away" : "draw";
+    // Para AET/PEN el resultado de 90 min SIEMPRE es empate (de lo contrario no habría T.E.)
+    // Si score90 falta, forzamos "draw" para que los puntos sean correctos.
+    const result = (needsScore90 && score90Missing)
+      ? "draw"
+      : finalHomeScore > finalAwayScore ? "home"
+      : finalAwayScore > finalHomeScore ? "away"
+      : "draw";
 
     // Actualizar partido en Firestore — NO sobreescribir matchKey original
     // para no romper las búsquedas de predicciones que usan el matchKey guardado
