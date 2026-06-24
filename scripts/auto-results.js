@@ -346,6 +346,7 @@ async function fetchESPNMatches() {
       inProgress,
       statusType,
       clock,       // minuto del partido (ej. "45'", "90'+2")
+      period:      comp?.status?.period   || 0,  // 1=1er tiempo, 2=2do tiempo, 3+=tiempo extra/penales
     };
   });
 }
@@ -473,13 +474,24 @@ async function main() {
         liveAwayScore: espn.awayScore,
         liveClock: espn.clock || "",
       };
+      // Guardar score90 SOLO durante el segundo tiempo (period 2).
+      // Esto captura el marcador de los 90 min incluyendo tiempo de compensación.
+      // Una vez que empieza el tiempo extra (period >= 3), ya NO se actualiza score90
+      // para conservar el marcador exacto al finalizar los 90 min.
+      if (espn.period === 2) {
+        update.score90Home = espn.homeScore;
+        update.score90Away = espn.awayScore;
+        fsMatch.score90Home = espn.homeScore;
+        fsMatch.score90Away = espn.awayScore;
+      }
       await withRetry(() =>
         db.collection("matches").doc(fsMatch.id).update(update)
       );
       fsMatch.live = true;
       fsMatch.liveHomeScore = espn.homeScore;
       fsMatch.liveAwayScore = espn.awayScore;
-      console.log(`🟢 En vivo: ${espn.homeTeam} ${espn.homeScore}-${espn.awayScore} ${espn.awayTeam}`);
+      const periodLabel = espn.period >= 3 ? " [T.E.]" : "";
+      console.log(`🟢 En vivo: ${espn.homeTeam} ${espn.homeScore}-${espn.awayScore} ${espn.awayTeam}${periodLabel} (period ${espn.period})`);
       invalidateCache();
     }
   }
@@ -559,31 +571,66 @@ async function main() {
       continue;
     }
 
-    const result = espn.homeScore > espn.awayScore ? "home" : espn.awayScore > espn.homeScore ? "away" : "draw";
+    // ── Determinar marcador que cuenta para puntos ──────────────
+    // Para tiempo extra (AET) o penales (PEN): usar el score90 guardado durante
+    // el segundo tiempo, que refleja el marcador exacto a los 90 minutos.
+    // Para partidos que terminan en 90 min (FULL_TIME): usar el score de ESPN directamente.
+    const isAET = espn.statusType === "STATUS_FINAL_AET";
+    const isPEN = espn.statusType === "STATUS_FINAL_PEN";
+    const needsScore90 = isAET || isPEN;
+
+    let finalHomeScore, finalAwayScore;
+    if (needsScore90 && fsMatch.score90Home != null && fsMatch.score90Away != null) {
+      // Usar el marcador de 90 min guardado durante el segundo tiempo
+      finalHomeScore = fsMatch.score90Home;
+      finalAwayScore = fsMatch.score90Away;
+      console.log(`  ⏱️  ${isAET ? "Tiempo extra" : "Penales"} — usando score90: ${finalHomeScore}-${finalAwayScore} (ESPN final: ${espn.homeScore}-${espn.awayScore})`);
+    } else if (needsScore90) {
+      // score90 no disponible (edge case muy raro) — el partido estaba empatado
+      // a los 90 min (de lo contrario no habría tiempo extra/penales)
+      // Forzamos empate con el marcador de ESPN final solo como fallback
+      finalHomeScore = espn.homeScore;
+      finalAwayScore = espn.awayScore;
+      console.log(`  ⚠️  score90 no disponible para ${espn.homeTeam} vs ${espn.awayTeam}. Usando score de ESPN como fallback.`);
+    } else {
+      // Partido terminó en 90 min — score de ESPN es el correcto
+      finalHomeScore = espn.homeScore;
+      finalAwayScore = espn.awayScore;
+    }
+
+    const result = finalHomeScore > finalAwayScore ? "home" : finalAwayScore > finalHomeScore ? "away" : "draw";
 
     // Actualizar partido en Firestore — NO sobreescribir matchKey original
     // para no romper las búsquedas de predicciones que usan el matchKey guardado
     await withRetry(() =>
       db.collection("matches").doc(fsMatch.id).update({
         live: false, played: true, finalized: true,
-        result, homeScore: espn.homeScore, awayScore: espn.awayScore,
+        result,
+        homeScore: finalHomeScore,   // marcador de 90 min (el que cuenta para puntos)
+        awayScore: finalAwayScore,
+        finalHomeScore: espn.homeScore,  // marcador final real (para display)
+        finalAwayScore: espn.awayScore,
+        statusType: espn.statusType,     // STATUS_FULL_TIME / STATUS_FINAL_AET / STATUS_FINAL_PEN
         autoUpdated: true, updatedAt: admin.firestore.FieldValue.serverTimestamp()
       })
     );
-    console.log(`  ✅ Partido actualizado`);
+    console.log(`  ✅ Partido actualizado — resultado: ${result} (${finalHomeScore}-${finalAwayScore})`);
     anyUpdated = true;
 
     // Actualizar en memoria para cálculos
-    fsMatch.played    = true;
-    fsMatch.finalized = true;
-    fsMatch.result    = result;
-    fsMatch.homeScore = espn.homeScore;
-    fsMatch.awayScore = espn.awayScore;
+    fsMatch.played         = true;
+    fsMatch.finalized      = true;
+    fsMatch.result         = result;
+    fsMatch.homeScore      = finalHomeScore;
+    fsMatch.awayScore      = finalAwayScore;
+    fsMatch.finalHomeScore = espn.homeScore;
+    fsMatch.finalAwayScore = espn.awayScore;
+    fsMatch.statusType     = espn.statusType;
 
     // Agregar al mapa de resultados (con variante normalizada para predMap lookup)
     const newEntry = {
       played: true, result,
-      homeScore: espn.homeScore, awayScore: espn.awayScore,
+      homeScore: finalHomeScore, awayScore: finalAwayScore,  // 90 min score para puntos
       homeTeam: fsMatch.homeTeam, awayTeam: fsMatch.awayTeam,
       week: fsMatch.week, phase: fsMatch.phase || "groups"
     };
