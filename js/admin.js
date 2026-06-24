@@ -923,21 +923,35 @@ function renderResultsList() {
       </div>
     </div>`).join("");
 
-  const playedHTML = played.map(m => `
+  const playedHTML = played.map(m => {
+    const isKO = m.phase && m.phase !== "groups";
+    const hasAET = m.statusType === "STATUS_FINAL_AET" || m.statusType === "STATUS_FINAL_PEN";
+    const score90Display = m.score90Home != null
+      ? `${m.score90Home}-${m.score90Away}`
+      : null;
+    const s90Home = m.score90Home != null ? m.score90Home : m.homeScore;
+    const s90Away = m.score90Away != null ? m.score90Away : m.awayScore;
+    return `
     <div class="result-item">
       <div class="result-item-teams">${esc(m.homeTeam)} vs ${esc(m.awayTeam)}</div>
-      <div class="result-item-score">${m.homeScore} - ${m.awayScore}</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div class="result-item-score">${m.homeScore} - ${m.awayScore}</div>
+        ${hasAET ? `<div style="font-size:10px;color:rgba(255,200,50,0.7)">${m.statusType === "STATUS_FINAL_AET" ? "T.E." : "Pen."} · 90min: ${score90Display || "?"}</div>` : ""}
+      </div>
       <div class="result-item-winner">
         ${m.result === "draw" ? "Empate" : m.result === "home" ? `Gana ${esc(m.homeTeam)}` : `Gana ${esc(m.awayTeam)}`}
       </div>
       <span style="font-size:10px;color:rgba(255,255,255,0.3)">${esc(m.phase || "Grupos")}</span>
       <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn-icon" title="Corregir marcador 90 min" style="color:#f59e0b" onclick="openScore90Modal('${m.id}','${esc(m.homeTeam)}','${esc(m.awayTeam)}',${s90Home},${s90Away})">
+          <i class="fa-solid fa-stopwatch"></i>
+        </button>
         <button class="btn-icon danger" title="Eliminar resultado" onclick="deleteResult('${m.id}','${esc(m.homeTeam)}','${esc(m.awayTeam)}')">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 
   container.innerHTML = liveHTML + playedHTML;
 }
@@ -946,6 +960,117 @@ function renderResultsList() {
 window.editLive = (id) => {
   switchTab("live");
   showToast("Actualiza el marcador en el panel de control.");
+};
+
+// ── SCORE90 MODAL ─────────────────────────────────────────────────────────────
+let _score90MatchId = null;
+
+window.openScore90Modal = (matchId, homeTeam, awayTeam, score90Home, score90Away) => {
+  _score90MatchId = matchId;
+  document.getElementById("score90ModalTitle").textContent  = "Corregir marcador 90 min";
+  document.getElementById("score90ModalSubtitle").textContent = `${homeTeam} vs ${awayTeam}`;
+  document.getElementById("score90HomeLabel").textContent   = homeTeam;
+  document.getElementById("score90AwayLabel").textContent   = awayTeam;
+  document.getElementById("score90HomeInput").value         = score90Home ?? 0;
+  document.getElementById("score90AwayInput").value         = score90Away ?? 0;
+  document.getElementById("score90Modal").classList.remove("hidden");
+};
+
+window.closeScore90Modal = () => {
+  document.getElementById("score90Modal").classList.add("hidden");
+  _score90MatchId = null;
+};
+
+window.saveScore90 = async () => {
+  if (!_score90MatchId) return;
+  const s90H = parseInt(document.getElementById("score90HomeInput").value, 10);
+  const s90A = parseInt(document.getElementById("score90AwayInput").value, 10);
+  if (isNaN(s90H) || isNaN(s90A) || s90H < 0 || s90A < 0) {
+    showToast("⚠️ Ingresa marcadores válidos."); return;
+  }
+
+  const result90 = s90H > s90A ? "home" : s90A > s90H ? "away" : "draw";
+
+  try {
+    // 1. Actualizar el partido en Firestore
+    await updateDoc(doc(db, "matches", _score90MatchId), {
+      score90Home: s90H,
+      score90Away: s90A,
+      homeScore:   s90H,        // homeScore = el que cuenta para puntos
+      awayScore:   s90A,
+      result:      result90,
+      updatedAt:   serverTimestamp()
+    });
+
+    // 2. Recalcular puntos de todos los participantes
+    const [matchesSnap, participantsSnap] = await Promise.all([
+      getDocs(collection(db, "matches")),
+      getDocs(collection(db, "participants")),
+    ]);
+
+    const allMatches      = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const allParticipants = participantsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const allResults = {};
+    for (const m of allMatches) {
+      if (m.played && m.matchKey) {
+        const entry = {
+          played: true, result: m.result,
+          homeScore: m.homeScore, awayScore: m.awayScore,
+          homeTeam: m.homeTeam, awayTeam: m.awayTeam,
+          week: m.week, phase: m.phase || "groups"
+        };
+        allResults[m.matchKey] = entry;
+        const normKey = buildMatchKey(m.homeTeam || "", m.awayTeam || "");
+        if (normKey !== m.matchKey) allResults[normKey] = entry;
+      }
+    }
+
+    // Patch en memoria con el nuevo score90
+    const patchMatch = allMatches.find(m => m.id === _score90MatchId);
+    if (patchMatch) {
+      patchMatch.homeScore = s90H;
+      patchMatch.awayScore = s90A;
+      patchMatch.result    = result90;
+      const mk = patchMatch.matchKey;
+      if (mk && allResults[mk]) {
+        allResults[mk].homeScore = s90H;
+        allResults[mk].awayScore = s90A;
+        allResults[mk].result    = result90;
+      }
+    }
+
+    const updates = allParticipants.map(p => {
+      const totals = GolnerScoring.calcParticipantTotal(
+        Object.entries(p.predictions || {}).map(([k, v]) => ({ matchKey: k, ...v })),
+        allResults
+      );
+      return { id: p.id, ...totals };
+    });
+
+    const BATCH = 400;
+    for (let i = 0; i < updates.length; i += BATCH) {
+      const batch = writeBatch(db);
+      for (const u of updates.slice(i, i + BATCH)) {
+        batch.update(doc(db, "participants", u.id), {
+          totalPoints:    u.totalPoints,
+          weekPoints:     u.weekPoints,
+          phasePoints:    u.phasePoints,
+          matchBreakdown: u.matchBreakdown,
+          exactScores:    u.exactScores,
+          correctResults: u.correctResults,
+          updatedAt:      serverTimestamp()
+        });
+      }
+      await batch.commit();
+    }
+
+    closeScore90Modal();
+    showToast(`✅ Score90 actualizado y puntos recalculados.`);
+  } catch(e) {
+    console.error(e);
+    showToast(`❌ Error: ${e.message}`);
+  }
 };
 
 // Quitar estado en vivo de un partido

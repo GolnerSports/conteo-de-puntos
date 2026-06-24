@@ -481,6 +481,63 @@
     </div>
   </div>
 
+  <!-- ── EDIT PREDICTIONS MODAL ───────────────────────────── -->
+  <div class="modal-overlay hidden" id="editPredModal" style="align-items:flex-start;overflow-y:auto;padding:24px 12px">
+    <div class="modal" style="max-width:520px;width:100%;max-height:none;padding:0;overflow:hidden">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.08);background:rgba(57,255,20,0.05)">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#fff" id="editPredTitle">Editar Quiniela</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px" id="editPredSubtitle"></div>
+        </div>
+        <button class="btn-icon" onclick="closeEditPredModal()" style="font-size:18px">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <!-- Notice -->
+      <div style="padding:10px 20px;background:rgba(251,191,36,0.08);border-bottom:1px solid rgba(251,191,36,0.15);display:flex;gap:8px;align-items:flex-start">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24;font-size:13px;margin-top:1px;flex-shrink:0"></i>
+        <span style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5">Solo se muestran partidos <strong style="color:rgba(255,255,255,0.75)">pendientes</strong> (sin resultado). Los marcadores de partidos ya jugados no se pueden cambiar.</span>
+      </div>
+      <!-- Body: prediction rows injected here -->
+      <div id="editPredBody" style="padding:12px 20px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto"></div>
+      <!-- Footer -->
+      <div style="padding:14px 20px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeEditPredModal()">Cancelar</button>
+        <button class="btn btn-primary" id="editPredSaveBtn" onclick="saveEditedPredictions()">
+          <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCORE90 EDIT MODAL ───────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="score90Modal">
+    <div class="modal" style="max-width:380px;width:95%">
+      <div class="modal-icon" style="color:#f59e0b"><i class="fa-solid fa-stopwatch"></i></div>
+      <h3 id="score90ModalTitle">Corregir marcador 90 min</h3>
+      <p id="score90ModalSubtitle" style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px"></p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px">
+        <div style="text-align:center">
+          <div id="score90HomeLabel" style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <input id="score90HomeInput" type="number" min="0" max="20" style="width:64px;height:52px;font-size:24px;font-weight:900;text-align:center;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff" />
+        </div>
+        <span style="font-size:22px;font-weight:900;color:rgba(255,255,255,0.3)">-</span>
+        <div style="text-align:center">
+          <div id="score90AwayLabel" style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <input id="score90AwayInput" type="number" min="0" max="20" style="width:64px;height:52px;font-size:24px;font-weight:900;text-align:center;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff" />
+        </div>
+      </div>
+      <p style="font-size:11px;color:rgba(255,159,50,0.7);text-align:center;margin-bottom:16px">
+        <i class="fa-solid fa-triangle-exclamation"></i> Esto recalculará los puntos de todos los participantes
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeScore90Modal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveScore90()">Guardar y recalcular</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── CONFIRM MODAL ──────────────────────────────────────── -->
   <div class="modal-overlay hidden" id="confirmModal">
     <div class="modal">
