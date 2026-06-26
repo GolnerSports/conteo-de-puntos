@@ -1487,7 +1487,8 @@
         const cards = phaseMatches.map(m => {
           const mk = m.matchKey || buildMatchKeyLocal(m.homeTeam, m.awayTeam);
           const matchDate = m.date?.toDate ? m.date.toDate() : new Date(m.date || 0);
-          const isLocked  = matchDate <= now || m.played;
+          const LOCK_BEFORE_MS = 5 * 60 * 1000; // bloquear 5 min antes del inicio
+          const isLocked  = (matchDate.getTime() - LOCK_BEFORE_MS) <= now.getTime() || m.played;
           const state     = window.knockoutFormState[mk] || {};
           const hFlag     = flag(m.homeTeam);
           const aFlag     = flag(m.awayTeam);
