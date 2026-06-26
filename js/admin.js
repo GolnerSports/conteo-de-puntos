@@ -235,6 +235,7 @@ const tabTitles = {
   matches:      "Partidos",
   tournament:   "Configuración del Torneo",
   stats:        "Estadísticas",
+  quinielas:    "Quinielas Eliminatorias",
   notifications:"Notificaciones"
 };
 
@@ -255,9 +256,10 @@ function switchTab(tab) {
   const overlay = document.getElementById("sidebarOverlay");
   if (overlay) overlay.classList.remove("visible");
 
-  if (tab === "stats") renderStats();
+  if (tab === "stats")      renderStats();
   if (tab === "tournament") updateCutPreview();
-  if (tab === "live") renderLiveControl();
+  if (tab === "live")       renderLiveControl();
+  if (tab === "quinielas")  renderQuinielas();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -2459,3 +2461,201 @@ window.saveEditedPredictions = async () => {
     btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar cambios`;
   }
 };
+
+// ════════════════════════════════════════════════════════════════
+// QUINIELAS ELIMINATORIAS — Seguimiento de predicciones
+// ════════════════════════════════════════════════════════════════
+
+const KNOCKOUT_PHASE_LABEL = {
+  round_of_16:   "Dieciseisavos",
+  round_of_8:    "Octavos",
+  quarter_final: "Cuartos",
+  semi_final:    "Semifinal",
+  final:         "Final"
+};
+
+let _qFilter = "all"; // "all" | "missing" | "full"
+
+window.quinielasFilter = (f) => {
+  _qFilter = f;
+  ["all","missing","full"].forEach(id => {
+    document.getElementById(`qFilter${id.charAt(0).toUpperCase()+id.slice(1)}`)
+      ?.classList.toggle("active", id === f);
+  });
+  renderQuinielasTable();
+};
+
+window.openQuinielasDrawer = (participantId) => {
+  const p = allParticipants.find(x => x.id === participantId);
+  if (!p) return;
+
+  const phase = tournamentConfig.phase;
+  if (!KNOCKOUT_PHASE_LABEL[phase]) return;
+
+  const phaseMatches = allMatches.filter(m => m.phase === phase)
+    .sort((a, b) => {
+      const da = a.date?.toDate ? a.date.toDate() : new Date(a.date || 0);
+      const db2 = b.date?.toDate ? b.date.toDate() : new Date(b.date || 0);
+      return da - db2;
+    });
+
+  const preds = p.predictions || {};
+
+  const rows = phaseMatches.map(m => {
+    const mk = m.matchKey || (normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam));
+    // Buscar predicción con 4-level lookup
+    let pred = preds[mk];
+    if (!pred) {
+      const altKey = normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam);
+      pred = preds[altKey];
+    }
+    if (!pred) {
+      for (const [k, v] of Object.entries(preds)) {
+        const normK = k.includes("_vs_")
+          ? normTeam(k.slice(0, k.indexOf("_vs_")).replace(/_/g," ")) + "_vs_" + normTeam(k.slice(k.indexOf("_vs_")+4).replace(/_/g," "))
+          : k;
+        if (normK === (normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam))) { pred = v; break; }
+      }
+    }
+
+    const winner = pred?.prediction === "home"  ? m.homeTeam
+                 : pred?.prediction === "away"  ? m.awayTeam
+                 : pred?.prediction === "draw"  ? "Empate"
+                 : null;
+    const score  = pred?.homeScore !== null && pred?.homeScore !== undefined
+                && pred?.awayScore !== null && pred?.awayScore !== undefined
+                 ? `${pred.homeScore}-${pred.awayScore}` : "";
+
+    const matchDate = m.date?.toDate ? m.date.toDate() : new Date(m.date || 0);
+    const dateStr   = matchDate.toLocaleDateString("es-MX", { weekday:"short", day:"numeric", month:"short" });
+
+    return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.07)">
+      <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:4px">${dateStr}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:13px;font-weight:700;color:#fff;flex:1">
+          ${m.homeTeam} vs ${m.awayTeam}
+        </span>
+        ${winner
+          ? `<span style="font-size:12px;font-weight:700;color:#39FF14;white-space:nowrap">
+               ${winner}${score ? ` (${score})` : ""}
+             </span>`
+          : `<span style="font-size:12px;color:rgba(255,255,255,0.3);font-style:italic">Sin predicción</span>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("quinielasDrawerName").textContent = p.name + " · " + (p.golnerId || "");
+  document.getElementById("quinielasDrawerBody").innerHTML   = rows ||
+    `<p style="color:rgba(255,255,255,0.3);font-size:13px">Sin predicciones registradas.</p>`;
+  document.getElementById("quinielasDrawer").style.display = "block";
+};
+
+window.closeQuinielasDrawer = (e) => {
+  if (e.target === document.getElementById("quinielasDrawer")) {
+    document.getElementById("quinielasDrawer").style.display = "none";
+  }
+};
+
+function renderQuinielasTable() {
+  const tbody = document.getElementById("quinielasTable");
+  if (!tbody) return;
+
+  const phase = tournamentConfig.phase;
+  if (!KNOCKOUT_PHASE_LABEL[phase]) {
+    tbody.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.35);font-size:14px">
+      Sólo disponible durante fases eliminatorias.<br>Fase actual: <strong>Grupos</strong>
+    </div>`;
+    return;
+  }
+
+  const phaseMatches = allMatches.filter(m => m.phase === phase);
+  const totalMatches = phaseMatches.length;
+  const classified   = allParticipants.filter(p => p.status !== "eliminated");
+
+  // Contar predicciones de cada clasificado
+  const rows = classified.map(p => {
+    const preds = p.predictions || {};
+    let filled  = 0;
+
+    for (const m of phaseMatches) {
+      const mk     = m.matchKey || (normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam));
+      const altKey = normTeam(m.homeTeam) + "_vs_" + normTeam(m.awayTeam);
+      let pred     = preds[mk] || preds[altKey];
+      if (!pred) {
+        for (const [k, v] of Object.entries(preds)) {
+          const normK = k.includes("_vs_")
+            ? normTeam(k.slice(0, k.indexOf("_vs_")).replace(/_/g," ")) + "_vs_" + normTeam(k.slice(k.indexOf("_vs_")+4).replace(/_/g," "))
+            : k;
+          if (normK === altKey) { pred = v; break; }
+        }
+      }
+      if (pred?.prediction) filled++;
+    }
+
+    return { p, filled, total: totalMatches };
+  });
+
+  // Estadísticas globales
+  const countFull    = rows.filter(r => r.filled === r.total && r.total > 0).length;
+  const countPartial = rows.filter(r => r.filled > 0 && r.filled < r.total).length;
+  const countNone    = rows.filter(r => r.filled === 0).length;
+
+  document.getElementById("quinielasCountFull").textContent    = countFull;
+  document.getElementById("quinielasCountPartial").textContent = countPartial;
+  document.getElementById("quinielasCountNone").textContent    = countNone;
+
+  // Filtrar según selección
+  const filtered = _qFilter === "full"    ? rows.filter(r => r.filled === r.total && r.total > 0)
+                 : _qFilter === "missing" ? rows.filter(r => r.filled < r.total)
+                 : rows;
+
+  // Ordenar: primero los que faltan, luego parciales, luego completos; dentro de cada grupo por nombre
+  filtered.sort((a, b) => {
+    const scoreA = a.filled === a.total ? 2 : a.filled === 0 ? 0 : 1;
+    const scoreB = b.filled === b.total ? 2 : b.filled === 0 ? 0 : 1;
+    if (scoreA !== scoreB) return scoreA - scoreB; // falta primero
+    return a.p.name.localeCompare(b.p.name);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<div style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">Sin resultados</div>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(({ p, filled, total }) => {
+    const pct      = total > 0 ? Math.round((filled / total) * 100) : 0;
+    const color    = filled === total && total > 0 ? "#39FF14"
+                   : filled === 0                  ? "#ef4444"
+                   : "#FFD700";
+    const barW     = total > 0 ? `${pct}%` : "0%";
+    const rank     = allParticipants.findIndex(x => x.id === p.id) + 1;
+
+    return `<div onclick="openQuinielasDrawer('${p.id}')"
+               style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+                      border-radius:10px;padding:12px 14px;cursor:pointer;transition:background 0.15s"
+               onmouseover="this.style.background='rgba(255,255,255,0.07)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <span style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:700;flex-shrink:0">#${rank}</span>
+          <span style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.3)">${p.golnerId || ""}</span>
+        </div>
+        <span style="font-size:13px;font-weight:800;color:${color};flex-shrink:0">${filled}/${total}</span>
+      </div>
+      <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${barW};background:${color};border-radius:4px;transition:width 0.3s"></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderQuinielas() {
+  const phase     = tournamentConfig.phase;
+  const phaseLabel = KNOCKOUT_PHASE_LABEL[phase] || "Grupos";
+
+  const labelEl = document.getElementById("quinielasPhaseLabel");
+  if (labelEl) labelEl.textContent = phaseLabel;
+
+  renderQuinielasTable();
+}

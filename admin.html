@@ -52,6 +52,9 @@
       <a href="#" class="sidebar-link" data-tab="stats">
         <i class="fa-solid fa-chart-bar"></i><span>Estadísticas</span>
       </a>
+      <a href="#" class="sidebar-link" data-tab="quinielas">
+        <i class="fa-solid fa-clipboard-list"></i><span>Quinielas</span>
+      </a>
       <a href="#" class="sidebar-link" data-tab="notifications">
         <i class="fa-solid fa-bell"></i><span>Notificaciones</span>
       </a>
@@ -391,6 +394,56 @@
       </div>
     </section>
 
+    <!-- ── QUINIELAS ELIMINATORIAS TAB ──────────────────────── -->
+    <section class="tab-content" id="tab-quinielas">
+      <div class="admin-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-clipboard-list" style="color:var(--green)"></i> Quinielas Eliminatorias</h2>
+          <span class="card-badge" id="quinielasPhaseLabel">—</span>
+        </div>
+
+        <!-- Barra de resumen -->
+        <div id="quinielasStats" style="display:flex;gap:16px;flex-wrap:wrap;padding:0 0 16px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:16px">
+          <div style="background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.2);border-radius:10px;padding:10px 16px;flex:1;min-width:120px">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.6px;margin-bottom:4px">COMPLETADAS</div>
+            <div id="quinielasCountFull" style="font-size:22px;font-weight:800;color:#39FF14">—</div>
+          </div>
+          <div style="background:rgba(255,200,50,0.08);border:1px solid rgba(255,200,50,0.2);border-radius:10px;padding:10px 16px;flex:1;min-width:120px">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.6px;margin-bottom:4px">PARCIALES</div>
+            <div id="quinielasCountPartial" style="font-size:22px;font-weight:800;color:#FFD700">—</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:10px 16px;flex:1;min-width:120px">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.6px;margin-bottom:4px">SIN LLENAR</div>
+            <div id="quinielasCountNone" style="font-size:22px;font-weight:800;color:#ef4444">—</div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-outline active" id="qFilterAll"    onclick="quinielasFilter('all')">Todos</button>
+          <button class="btn btn-sm btn-outline"        id="qFilterMissing" onclick="quinielasFilter('missing')">Falta llenar</button>
+          <button class="btn btn-sm btn-outline"        id="qFilterFull"    onclick="quinielasFilter('full')">Completos</button>
+        </div>
+
+        <!-- Tabla de participantes -->
+        <div id="quinielasTable" style="display:flex;flex-direction:column;gap:4px">
+          <div style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">Cargando…</div>
+        </div>
+      </div>
+
+      <!-- Drawer: predicciones de un participante -->
+      <div id="quinielasDrawer" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7)" onclick="closeQuinielasDrawer(event)">
+        <div style="position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:#111a11;overflow-y:auto;padding:24px 20px 40px;border-left:1px solid rgba(255,255,255,0.1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h3 id="quinielasDrawerName" style="font-size:16px;font-weight:800;color:#fff;margin:0"></h3>
+            <button onclick="document.getElementById('quinielasDrawer').style.display='none'"
+                    style="background:rgba(255,255,255,0.08);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px">✕</button>
+          </div>
+          <div id="quinielasDrawerBody"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── NOTIFICACIONES TAB ────────────────────────────────── -->
     <section class="tab-content" id="tab-notifications">
 
@@ -571,6 +624,9 @@
     <button class="bottom-nav-item" data-tab="stats">
       <i class="fa-solid fa-chart-bar"></i><span>Stats</span>
     </button>
+    <button class="bottom-nav-item" data-tab="quinielas">
+      <i class="fa-solid fa-clipboard-list"></i><span>Quinielas</span>
+    </button>
     <button class="bottom-nav-item" data-tab="notifications">
       <i class="fa-solid fa-bell"></i><span>Notif</span>
     </button>
@@ -579,6 +635,6 @@
   <!-- Scripts (parser + scoring + admin logic) -->
   <script src="js/parser.js"></script>
   <script src="js/scoring.js"></script>
-  <script type="module" src="js/admin.js?v=11"></script>
+  <script type="module" src="js/admin.js?v=12"></script>
 </body>
 </html>

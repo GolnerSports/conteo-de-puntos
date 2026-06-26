@@ -199,6 +199,146 @@
       animation: predSlideOutRight 0.15s ease both;
       pointer-events: none;
     }
+
+    /* ── KNOCKOUT PREDICTION CARDS ──────────────────────────── */
+    .ko-card {
+      background: #0d120d;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .ko-card.ko-has-pred { border-color: rgba(57,255,20,0.25); }
+    .ko-card.ko-locked   { opacity: 0.8; }
+    .ko-date-row {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .ko-teams-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .ko-team-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ko-team-name.right { text-align: right; }
+    .ko-vs { font-size: 10px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
+    .ko-result-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .ko-btn {
+      flex: 1;
+      padding: 9px 4px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      line-height: 1.3;
+    }
+    .ko-btn:active { transform: scale(0.96); }
+    .ko-btn.ko-sel {
+      border-color: #39FF14;
+      background: rgba(57,255,20,0.13);
+      color: #39FF14;
+    }
+    .ko-score-section {
+      margin-bottom: 14px;
+    }
+    .ko-score-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 8px;
+    }
+    .ko-score-inputs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ko-score-input {
+      width: 56px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      text-align: center;
+      padding: 8px 4px;
+      font-family: inherit;
+      -moz-appearance: textfield;
+    }
+    .ko-score-input::-webkit-outer-spin-button,
+    .ko-score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .ko-score-input:focus { outline: none; border-color: rgba(57,255,20,0.45); }
+    .ko-score-sep { font-size: 20px; color: rgba(255,255,255,0.3); font-weight: 300; }
+    .ko-save-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .ko-save-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .ko-save-btn.ko-ready {
+      border-color: rgba(57,255,20,0.5);
+      background: rgba(57,255,20,0.08);
+      color: #39FF14;
+    }
+    .ko-save-btn.ko-saved {
+      border-color: #39FF14;
+      background: rgba(57,255,20,0.13);
+      color: #39FF14;
+    }
+    .ko-progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 600;
+    }
+    .ko-progress-bar span.ko-count { color: #39FF14; font-size: 14px; font-weight: 800; }
+    .ko-locked-pred {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 4px;
+    }
+    .ko-locked-pred strong { color: #fff; }
+    .ko-no-pred { font-size: 12px; color: rgba(255,255,255,0.3); font-style: italic; }
+    .ko-elim-msg {
+      text-align: center;
+      padding: 52px 24px;
+    }
   </style>
 
   <script>
@@ -467,7 +607,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-             collection, onSnapshot, query, orderBy, doc, getDoc, setDoc, serverTimestamp
+             collection, onSnapshot, query, orderBy, doc, getDoc, setDoc, updateDoc, serverTimestamp
            } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
@@ -492,6 +632,7 @@
     let currentFilter   = "all";
     let tournamentConfig = { phase: "groups", week: 1, cutoffPct: 0.4, showCutLine: true };
     let dataLoaded = false;
+    window.knockoutFormState = {}; // { matchKey → { prediction, homeScore, awayScore, saved } }
 
     // Timeout: si en 12 segundos no llegan datos, mostrar botón de recargar
     const loadTimeout = setTimeout(() => {
@@ -1283,6 +1424,154 @@
 
       const resultLabel = (r, home, away) => r === "home" ? home : r === "away" ? away : r === "draw" ? "Empate" : "—";
 
+      // ── Detección de fase eliminatoria activa ─────────────────
+      const KNOCKOUT_PHASE_KEYS = {
+        "Dieciseisavos": "round_of_16",
+        "Octavos":       "round_of_8",
+        "Cuartos":       "quarter_final",
+        "Semifinal":     "semi_final",
+        "Final":         "final"
+      };
+      const activePhaseKey = KNOCKOUT_PHASE_KEYS[window.activePredTab];
+      const isKnockoutTab  = !!activePhaseKey;
+
+      // Helper: busca la predicción guardada de un partido (4 niveles de lookup)
+      const findSavedPred = (preds, mk, homeTeam, awayTeam) => {
+        if (preds[mk]) return preds[mk];
+        const altKey = buildMatchKeyLocal(homeTeam, awayTeam);
+        if (preds[altKey]) return preds[altKey];
+        for (const [k, v] of Object.entries(preds)) {
+          if (buildMatchKeyLocal(v.homeTeam||"", v.awayTeam||"") === altKey) return v;
+          // Re-normalizar la clave guardada
+          if (k.includes("_vs_")) {
+            const vi = k.indexOf("_vs_");
+            const rk = buildMatchKeyLocal(k.slice(0, vi).replace(/_/g," "), k.slice(vi+4).replace(/_/g," "));
+            if (rk === altKey) return v;
+          }
+        }
+        return null;
+      };
+
+      // Constructor de tarjetas editables para eliminatorias
+      const buildKnockoutCards = (phaseMatches, savedPreds) => {
+        const now = new Date();
+        let filled = 0;
+
+        // Pre-cargar estado del formulario desde predicciones guardadas
+        // (solo si el usuario no ha tocado esa tarjeta en esta sesión)
+        for (const m of phaseMatches) {
+          const mk   = m.matchKey || buildMatchKeyLocal(m.homeTeam, m.awayTeam);
+          if (!window.knockoutFormState[mk]) {
+            const sp = findSavedPred(savedPreds, mk, m.homeTeam, m.awayTeam);
+            if (sp) {
+              window.knockoutFormState[mk] = {
+                prediction: sp.prediction,
+                homeScore:  sp.homeScore,
+                awayScore:  sp.awayScore,
+                saved: true
+              };
+            }
+          }
+          if (window.knockoutFormState[mk]?.prediction) filled++;
+        }
+
+        const total = phaseMatches.length;
+        const allDone = filled === total && total > 0;
+
+        const progressBar = `
+          <div class="ko-progress-bar">
+            <span>Predicciones completadas</span>
+            <span class="ko-count">${filled}/${total}</span>
+          </div>`;
+
+        const cards = phaseMatches.map(m => {
+          const mk = m.matchKey || buildMatchKeyLocal(m.homeTeam, m.awayTeam);
+          const matchDate = m.date?.toDate ? m.date.toDate() : new Date(m.date || 0);
+          const isLocked  = matchDate <= now || m.played;
+          const state     = window.knockoutFormState[mk] || {};
+          const hFlag     = flag(m.homeTeam);
+          const aFlag     = flag(m.awayTeam);
+          const dn        = n => displayName(n);
+
+          const dateStr = matchDate.toLocaleDateString("es-MX", { weekday:"short", month:"short", day:"numeric" });
+          const timeStr = matchDate.toLocaleTimeString("es-MX", { hour:"2-digit", minute:"2-digit" });
+
+          if (isLocked) {
+            // ── Tarjeta bloqueada (partido iniciado) ─────────────
+            const pred = state.prediction;
+            const winnerLabel = pred === "home" ? dn(m.homeTeam)
+                              : pred === "away" ? dn(m.awayTeam)
+                              : pred === "draw" ? "Empate" : null;
+            const scoreLabel  = state.homeScore !== null && state.homeScore !== undefined
+                                && state.awayScore !== null && state.awayScore !== undefined
+                              ? ` · ${state.homeScore}-${state.awayScore}` : "";
+            return `
+            <div class="ko-card ko-locked${pred ? " ko-has-pred" : ""}">
+              <div class="ko-date-row">🔒 ${dateStr} · ${timeStr}</div>
+              <div class="ko-teams-row">
+                <span style="font-size:18px">${hFlag}</span>
+                <span class="ko-team-name">${dn(m.homeTeam)}</span>
+                <span class="ko-vs">vs</span>
+                <span class="ko-team-name right">${dn(m.awayTeam)}</span>
+                <span style="font-size:18px">${aFlag}</span>
+              </div>
+              <div>
+                ${winnerLabel
+                  ? `<div class="ko-locked-pred">Tu predicción: <strong>${winnerLabel}${scoreLabel}</strong></div>`
+                  : `<div class="ko-no-pred">Sin predicción registrada</div>`}
+              </div>
+            </div>`;
+          }
+
+          // ── Tarjeta editable ───────────────────────────────────
+          const selHome  = state.prediction === "home"  ? " ko-sel" : "";
+          const selDraw  = state.prediction === "draw"  ? " ko-sel" : "";
+          const selAway  = state.prediction === "away"  ? " ko-sel" : "";
+          const hVal     = state.homeScore !== null && state.homeScore !== undefined ? state.homeScore : "";
+          const aVal     = state.awayScore !== null && state.awayScore !== undefined ? state.awayScore : "";
+          const hasPred  = !!state.prediction;
+          const isSaved  = !!state.saved;
+          const btnClass = isSaved ? " ko-saved" : hasPred ? " ko-ready" : "";
+          const btnLabel = isSaved ? "✅ Guardado — toca para actualizar" : hasPred ? "Guardar predicción" : "Elige un ganador primero";
+          const mkSafe   = mk; // matchKey solo contiene letras, números, guiones bajos
+
+          return `
+          <div class="ko-card${hasPred ? " ko-has-pred" : ""}" data-mk="${mkSafe}">
+            <div class="ko-date-row">📅 ${dateStr} · ${timeStr}</div>
+            <div class="ko-teams-row">
+              <span style="font-size:18px">${hFlag}</span>
+              <span class="ko-team-name">${dn(m.homeTeam)}</span>
+              <span class="ko-vs">vs</span>
+              <span class="ko-team-name right">${dn(m.awayTeam)}</span>
+              <span style="font-size:18px">${aFlag}</span>
+            </div>
+            <div class="ko-result-row">
+              <button class="ko-btn${selHome}" onclick="koSetResult('${mkSafe}','home')">🏠 Local</button>
+              <button class="ko-btn${selDraw}" onclick="koSetResult('${mkSafe}','draw')">🤝 Empate</button>
+              <button class="ko-btn${selAway}" onclick="koSetResult('${mkSafe}','away')">✈️ Visita</button>
+            </div>
+            <div class="ko-score-section">
+              <div class="ko-score-label">MARCADOR (OPCIONAL)</div>
+              <div class="ko-score-inputs">
+                <input class="ko-score-input" type="number" min="0" max="30"
+                       value="${hVal}" placeholder="0"
+                       oninput="koUpdateScore('${mkSafe}','home',this.value)">
+                <span class="ko-score-sep">—</span>
+                <input class="ko-score-input" type="number" min="0" max="30"
+                       value="${aVal}" placeholder="0"
+                       oninput="koUpdateScore('${mkSafe}','away',this.value)">
+              </div>
+            </div>
+            <button class="ko-save-btn${btnClass}" id="ko-save-${mkSafe}"
+                    onclick="koSavePrediction('${mkSafe}')" ${hasPred ? "" : "disabled"}>
+              ${btnLabel}
+            </button>
+          </div>`;
+        }).join("");
+
+        return progressBar + `<div style="padding:0 0 24px">${cards}</div>`;
+      };
+
       const activeMatches = window.activePredTab && groups[window.activePredTab] ? groups[window.activePredTab] : [];
 
       const cardBorder = m => m.pending ? "rgba(255,255,255,0.1)" : m.hitScore ? "#FFD700" : m.hitWinner ? "#39FF14" : "#ef4444";
@@ -1386,7 +1675,8 @@
             ${sorted.map((t, i) => {
               const nav = PHASE_NAV[t] || { icon: "📅", short: t };
               const isActive = t === window.activePredTab;
-              const hasMatches = groups[t] && groups[t].length > 0;
+              const hasMatches = (groups[t] && groups[t].length > 0) ||
+                (KNOCKOUT_PHASE_KEYS[t] && allMatchesData.some(m => m.phase === KNOCKOUT_PHASE_KEYS[t]));
               return `<button class="pred-phase-btn${isActive ? " active" : ""}${!hasMatches ? " empty" : ""}" data-ptab="${t}" data-idx="${i}">
                 <span class="pred-phase-icon">${nav.icon}</span>
                 <span class="pred-phase-label">${nav.short}</span>
@@ -1408,7 +1698,32 @@
       const enterClass = dir > 0 ? "pred-content-slide-in-right" : dir < 0 ? "pred-content-slide-in-left" : "pred-content-slide-in-right";
       window.predTabDirection = 0;
 
-      const contentHtml = activeHasMatches ? `<div>${matchCards}</div>` : emptyMsg;
+      // Contenido según tipo de fase
+      let contentHtml;
+      if (isKnockoutTab) {
+        const phaseMatches = allMatchesData
+          .filter(m => m.phase === activePhaseKey)
+          .sort((a, b) => {
+            const da = a.date?.toDate ? a.date.toDate() : new Date(a.date || 0);
+            const db2 = b.date?.toDate ? b.date.toDate() : new Date(b.date || 0);
+            return da - db2;
+          });
+        if (phaseMatches.length === 0) {
+          contentHtml = emptyMsg;
+        } else if (p.status === "eliminated") {
+          contentHtml = `<div class="ko-elim-msg">
+            <div style="font-size:44px;margin-bottom:14px">🚫</div>
+            <div style="color:#ef4444;font-size:15px;font-weight:800;margin-bottom:8px">No clasificaste a esta fase</div>
+            <div style="color:rgba(255,255,255,0.35);font-size:13px;line-height:1.6">
+              Solo los participantes clasificados<br>pueden llenar predicciones de eliminatorias.
+            </div>
+          </div>`;
+        } else {
+          contentHtml = buildKnockoutCards(phaseMatches, p.predictions || {});
+        }
+      } else {
+        contentHtml = activeHasMatches ? `<div>${matchCards}</div>` : emptyMsg;
+      }
       document.getElementById("predPhaseNavContainer").innerHTML = tabBar;
       const container = document.getElementById("predMatchList");
       container.innerHTML = `<div class="${enterClass}" style="overflow:hidden">${contentHtml}</div>`;
@@ -1452,6 +1767,99 @@
         });
       });
     }
+
+    // ── KNOCKOUT PREDICTION INTERACTIONS ─────────────────────────
+
+    // Actualiza la selección de ganador en el estado y en el DOM
+    window.koSetResult = (mk, result) => {
+      if (!window.knockoutFormState[mk]) window.knockoutFormState[mk] = {};
+      window.knockoutFormState[mk].prediction = result;
+      window.knockoutFormState[mk].saved = false;
+
+      // Actualizar botones de la tarjeta sin re-renderizar toda la vista
+      const card = document.querySelector(`.ko-card[data-mk="${mk}"]`);
+      if (!card) return;
+      card.querySelectorAll(".ko-btn").forEach(b => {
+        const r = b.getAttribute("onclick").match(/'(home|draw|away)'\)/)?.[1];
+        b.classList.toggle("ko-sel", r === result);
+      });
+
+      // Habilitar botón de guardar
+      const saveBtn = document.getElementById(`ko-save-${mk}`);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("ko-saved");
+        saveBtn.classList.add("ko-ready");
+        saveBtn.textContent = "Guardar predicción";
+      }
+
+      // Marcar la tarjeta como con predicción
+      card.classList.add("ko-has-pred");
+    };
+
+    // Actualiza el marcador en el estado (no re-renderiza)
+    window.koUpdateScore = (mk, side, val) => {
+      if (!window.knockoutFormState[mk]) window.knockoutFormState[mk] = {};
+      const num = val === "" ? null : parseInt(val, 10);
+      if (side === "home") window.knockoutFormState[mk].homeScore = (val === "" || isNaN(num)) ? null : num;
+      else                 window.knockoutFormState[mk].awayScore = (val === "" || isNaN(num)) ? null : num;
+      // Si tenía estado "guardado", indicar que hay cambios pendientes
+      if (window.knockoutFormState[mk].saved) {
+        window.knockoutFormState[mk].saved = false;
+        const saveBtn = document.getElementById(`ko-save-${mk}`);
+        if (saveBtn && window.knockoutFormState[mk].prediction) {
+          saveBtn.classList.remove("ko-saved");
+          saveBtn.classList.add("ko-ready");
+          saveBtn.textContent = "Guardar predicción";
+        }
+      }
+    };
+
+    // Guarda la predicción en Firestore
+    window.koSavePrediction = async (mk) => {
+      const session = getSession();
+      if (!session) return;
+      const state = window.knockoutFormState[mk] || {};
+      if (!state.prediction) return;
+
+      const match = allMatchesData.find(m =>
+        m.matchKey === mk || buildMatchKeyLocal(m.homeTeam, m.awayTeam) === mk
+      );
+
+      const saveBtn = document.getElementById(`ko-save-${mk}`);
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.classList.remove("ko-ready", "ko-saved");
+        saveBtn.textContent = "Guardando…";
+      }
+
+      try {
+        await updateDoc(doc(db, "participants", session.id), {
+          [`predictions.${mk}`]: {
+            matchKey:  mk,
+            homeTeam:  match?.homeTeam  || "",
+            awayTeam:  match?.awayTeam  || "",
+            prediction: state.prediction,
+            homeScore: state.homeScore !== undefined ? state.homeScore : null,
+            awayScore: state.awayScore !== undefined ? state.awayScore : null,
+          }
+        });
+
+        window.knockoutFormState[mk].saved = true;
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.classList.add("ko-saved");
+          saveBtn.textContent = "✅ Guardado — toca para actualizar";
+        }
+      } catch (err) {
+        console.error("koSavePrediction error:", err);
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.classList.add("ko-ready");
+          saveBtn.textContent = "⚠️ Error — intenta de nuevo";
+        }
+      }
+    };
 
     // Verificar sesión guardada al cargar
     if (getSession()) renderPredView();
