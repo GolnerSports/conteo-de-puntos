@@ -1820,6 +1820,20 @@
     window.koSavePrediction = async (mk) => {
       const session = getSession();
       if (!session) return;
+
+      // Verificar que el participante no esté eliminado (doble validación)
+      const me = allParticipants.find(x => x.id === session.id);
+      if (me?.status === "eliminated") return;
+
+      // Verificar que el partido no haya iniciado (doble validación del bloqueo)
+      const matchMeta = allMatchesData.find(m =>
+        m.matchKey === mk || buildMatchKeyLocal(m.homeTeam, m.awayTeam) === mk
+      );
+      if (matchMeta) {
+        const matchDate = matchMeta.date?.toDate ? matchMeta.date.toDate() : new Date(matchMeta.date || 0);
+        if ((matchDate.getTime() - 5 * 60 * 1000) <= Date.now() || matchMeta.played) return;
+      }
+
       const state = window.knockoutFormState[mk] || {};
       if (!state.prediction) return;
 
