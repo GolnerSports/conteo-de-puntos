@@ -356,11 +356,28 @@ async function fetchESPNMatches() {
       // Log para detectar estados nuevos que ESPN pueda introducir
       console.log(`  ℹ️  Estado ESPN desconocido: "${statusType}" — ${home?.team?.displayName} vs ${away?.team?.displayName}`);
     }
+    // Marcador de penales: ESPN lo puede poner en shootoutScore, penaltyScore,
+    // o en el último linescore (periodo de penales).
+    // Intentamos todas las variantes posibles.
+    const linescores = comp?.linescores || [];
+    const penLinescore = linescores.find(ls =>
+      (ls.type || "").toLowerCase().includes("pen") ||
+      (ls.displayName || "").toLowerCase().includes("pen") ||
+      (ls.abbreviation || "").toLowerCase() === "p"
+    );
+    const homePenRaw = home?.shootoutScore ?? home?.penaltyScore ??
+      (penLinescore ? penLinescore.home ?? penLinescore.homeScore : undefined);
+    const awayPenRaw = away?.shootoutScore ?? away?.penaltyScore ??
+      (penLinescore ? penLinescore.away ?? penLinescore.awayScore : undefined);
+    const penHome = homePenRaw !== undefined && homePenRaw !== null ? parseInt(homePenRaw) : NaN;
+    const penAway = awayPenRaw !== undefined && awayPenRaw !== null ? parseInt(awayPenRaw) : NaN;
     return {
-      homeTeam:    home?.team?.displayName || "",
-      awayTeam:    away?.team?.displayName || "",
-      homeScore:   parseInt(home?.score   || "0"),
-      awayScore:   parseInt(away?.score   || "0"),
+      homeTeam:          home?.team?.displayName || "",
+      awayTeam:          away?.team?.displayName || "",
+      homeScore:         parseInt(home?.score   || "0"),
+      awayScore:         parseInt(away?.score   || "0"),
+      penaltyHomeScore:  isNaN(penHome) ? null : penHome,  // marcador de penales (si aplica)
+      penaltyAwayScore:  isNaN(penAway) ? null : penAway,
       completed,
       inProgress,
       statusType,
@@ -528,6 +545,31 @@ async function main() {
     return fsMatch && !(fsMatch.played && fsMatch.finalized);
   });
 
+  // 3c. Reparar partidos de penales ya finalizados que no tengan penaltyHomeScore guardado
+  for (const espn of finished) {
+    if (espn.statusType !== "STATUS_FINAL_PEN") continue;
+    if (espn.penaltyHomeScore === null || espn.penaltyAwayScore === null) continue;
+    const matchKey    = buildMatchKey(espn.homeTeam, espn.awayTeam);
+    const matchKeyRev = buildMatchKey(espn.awayTeam, espn.homeTeam);
+    const fsMatch = allMatches.find(m =>
+      m.matchKey === matchKey || m.matchKey === matchKeyRev ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKey ||
+      buildMatchKey(m.homeTeam, m.awayTeam) === matchKeyRev
+    );
+    if (!fsMatch || !fsMatch.finalized) continue;
+    if (fsMatch.penaltyHomeScore != null) continue; // ya tiene el dato
+    console.log(`🔧 Reparando marcador de penales: ${espn.homeTeam} vs ${espn.awayTeam} → ${espn.penaltyHomeScore}-${espn.penaltyAwayScore}`);
+    await withRetry(() =>
+      db.collection("matches").doc(fsMatch.id).update({
+        penaltyHomeScore: espn.penaltyHomeScore,
+        penaltyAwayScore: espn.penaltyAwayScore,
+      })
+    );
+    fsMatch.penaltyHomeScore = espn.penaltyHomeScore;
+    fsMatch.penaltyAwayScore = espn.penaltyAwayScore;
+    invalidateCache();
+  }
+
   // 4. Construir mapa de resultados actuales (indexado por múltiples variantes del matchKey)
   const allResults = {};
   for (const m of allMatches) {
@@ -641,8 +683,10 @@ async function main() {
         result,
         homeScore: finalHomeScore,   // marcador de 90 min (el que cuenta para puntos)
         awayScore: finalAwayScore,
-        finalHomeScore: espn.homeScore,  // marcador final real (para display)
+        finalHomeScore: espn.homeScore,  // marcador al final del T.E. (para display)
         finalAwayScore: espn.awayScore,
+        penaltyHomeScore: espn.penaltyHomeScore ?? null,  // marcador de penales (solo si isPEN)
+        penaltyAwayScore: espn.penaltyAwayScore ?? null,
         statusType: espn.statusType,     // STATUS_FULL_TIME / STATUS_FINAL_AET / STATUS_FINAL_PEN
         autoUpdated: true, updatedAt: admin.firestore.FieldValue.serverTimestamp()
       })
